@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
+import heroImg from "../assets/Images/img3.jpg";
 
 function Home() {
   return (
     <main className="bg-[#F9FCFF] text-slate-900">
       <section className="hero min-h-screen overflow-hidden px-4 py-12 sm:px-6 lg:px-8 flex items-center justify-center text-center">
-        <div className="mx-auto w-full max-w-5xl">
-          <div className="grid items-center gap-12">
+        <div className="relative mx-auto w-full max-w-8xl max-h-6xl pt-15 pb-15 rounded-2xl overflow-hidden">
+          <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover filter blur-md scale-105" />
+          <div className="absolute inset-0 bg-black/70" aria-hidden="true" />
+          <div className="relative z-10 grid items-center gap-12">
             <div className="mx-auto max-w-2xl">
               <p className="text-sm uppercase tracking-[0.35em] text-[#7176C4]">Trusted since 2008 · Egbeda, Lagos</p>
               <h1 className="mt-6 text-4xl font-semibold leading-tight text-[#141432] sm:text-5xl">
@@ -55,6 +58,66 @@ function Home() {
                 </p>
               </div>
             </div> */}
+          </div>
+
+          {/* features strip will appear below the hero */}
+
+        </div>
+      </section>
+
+      {/* Features strip below hero */}
+      <section className="-mt-8 mb-12 px-5 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="hidden w-full rounded-full bg-white/90 py-3 shadow-xl backdrop-blur-sm border border-gray-100 md:grid md:grid-cols-4">
+            <div className="flex items-center gap-4 px-6 py-3">
+              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]"> <i className="fa-solid fa-truck"></i> </div>
+              <div>
+                <div className="text-sm font-semibold text-[#141432]">Free delivery</div>
+                <div className="text-xs text-slate-500">Orders over ₦15,000</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 border-l border-gray-100 px-6">
+              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]"> <i className="fa-solid fa-shield-halved"></i> </div>
+              <div>
+                <div className="text-sm font-semibold text-[#141432]">Genuine products</div>
+                <div className="text-xs text-slate-500">NAFDAC verified</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 border-l border-gray-100 px-6">
+              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]"> <i className="fa-solid fa-user-doctor"></i> </div>
+              <div>
+                <div className="text-sm font-semibold text-[#141432]">Expert pharmacists</div>
+                <div className="text-xs text-slate-500">Free consultations</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 border-l border-gray-100 px-6">
+              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]"> <i className="fa-regular fa-clock"></i> </div>
+              <div>
+                <div className="text-sm font-semibold text-[#141432]">Open 7 days</div>
+                <div className="text-xs text-slate-500">8am — 9pm daily</div>
+              </div>
+            </div>
+          </div>
+
+          {/* mobile strip */}
+          <div className="md:hidden mx-auto flex w-full gap-3 overflow-x-auto rounded-xl bg-white/90 py-3 px-3 shadow-lg backdrop-blur-sm border border-gray-100">
+            {[
+              {title: 'Free delivery', subtitle: 'Orders over ₦15,000', icon: 'fa-truck'},
+              {title: 'Genuine products', subtitle: 'NAFDAC verified', icon: 'fa-shield-halved'},
+              {title: 'Expert pharmacists', subtitle: 'Free consultations', icon: 'fa-user-doctor'},
+              {title: 'Open 7 days', subtitle: '8am — 9pm', icon: 'fa-clock'},
+            ].map((f) => (
+              <div key={f.title} className="flex min-w-[160px] items-center gap-3">
+                <div className="h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f] flex"> <i className={`fa-solid ${f.icon}`}></i> </div>
+                <div>
+                  <div className="text-sm font-semibold text-[#141432]">{f.title}</div>
+                  <div className="text-xs text-slate-500">{f.subtitle}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

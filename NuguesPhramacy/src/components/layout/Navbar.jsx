@@ -8,8 +8,8 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     isActive ? "text-[#23195f] font-semibold" : "text-gray-700 hover:text-[#23195f]";
 
   return (
-    <>
-      <div className="w-full bg-[#1B1967] text-white text-sm">
+    <div className="fixed inset-x-0 top-0 z-50">
+      <div className="ads w-full bg-[#1B1967] text-white text-sm">
         <div className="mx-auto max-w-7xl px-4 py-2 flex items-center justify-between">
           <span>
             <h3 className="text-xs font-semibold">
@@ -27,7 +27,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </div>
       </div>
 
-      <header className="w-full bg-[#F9FCFF] border-b border-gray-200">
+      <header className="relative w-full bg-white/80 border-b border-gray-200/40 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
@@ -98,7 +98,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         </div>
 
         {open && (
-          <div className="md:hidden border-t">
+          <div className="md:hidden absolute left-0 right-0 top-full border-t bg-white/90 backdrop-blur-sm">
             <div className="mx-auto max-w-7xl px-4 py-4 flex flex-col space-y-2">
               <NavLink to="/home" className={linkClass} onClick={() => setOpen(false)}>Home</NavLink>
               <NavLink to="/Shop" className={linkClass} onClick={() => setOpen(false)}>Shop</NavLink>
@@ -111,7 +111,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           </div>
         )}
       </header>
-    </>
+    </div>
   );
 }
 

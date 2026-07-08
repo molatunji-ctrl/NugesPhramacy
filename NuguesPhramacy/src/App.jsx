@@ -78,6 +78,7 @@ function AppLayout() {
       {!hideNavbar && (
         <Navbar cartCount={cartCount} wishlistCount={wishlist.length} />
       )}
+      <div className="pt-24">
       <Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route
@@ -125,6 +126,7 @@ function AppLayout() {
 />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
+      </div>
       {!hideFooter && <Footer />}
     </>
   );
