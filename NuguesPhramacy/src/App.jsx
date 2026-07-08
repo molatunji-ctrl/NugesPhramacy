@@ -1,32 +1,118 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 import SignIn from "./pages/SignIn";
 import LogIn from "./pages/LogIn";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import Service from "./pages/Service";
 import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/footer";
 
 function AppLayout() {
   const location = useLocation();
   const hideNavbar = location.pathname === "/signin" || location.pathname === "/login";
+  const hideFooter = hideNavbar;
+
+  // Empty starter state — no seed data
+  const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+
+  const addToCart = (product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          brand: product.brand || (product.category?.toUpperCase() || "NUGES"),
+          type: product.type || "PHARMACY",
+          price: product.price,
+          qty: 1,
+          image: product.image,
+        },
+      ];
+    });
+  };
+
+  const addToWishlist = (product) => {
+    setWishlist((prev) => {
+      if (prev.find((i) => i.id === product.id)) return prev;
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          brand: product.brand || (product.category?.toUpperCase() || "NUGES"),
+          type: product.type || "PHARMACY",
+          price: product.price,
+          image: product.image,
+          inStock: true,
+        },
+      ];
+    });
+  };
+
+  const removeFromWishlist = (id) =>
+    setWishlist((prev) => prev.filter((i) => i.id !== id));
+
+  const moveToCart = (item) => {
+    addToCart(item);
+    removeFromWishlist(item.id);
+  };
+
+  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   return (
     <>
-      {!hideNavbar && <Navbar />}
+      {!hideNavbar && (
+        <Navbar cartCount={cartCount} wishlistCount={wishlist.length} />
+      )}
       <Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="/home" element={<Home />} />
+        <Route
+          path="/home"
+          element={
+            <Home
+              addToCart={addToCart}
+              addToWishlist={addToWishlist}
+              wishlist={wishlist}
+            />
+          }
+        />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/login" element={<LogIn />} />
         <Route path="/Shop" element={<Shop />} />
         <Route path="/About" element={<About />} />
         <Route path="/Service" element={<Service />} />
-        <Route path="/Contact" element={<Navigate to="/home#contact" replace />} />
+        <Route path="/Contact" element={<Contact />} />
+        <Route
+          path="/cart"
+          element={<Cart cart={cart} setCart={setCart} />}
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <Wishlist
+              wishlist={wishlist}
+              removeFromWishlist={removeFromWishlist}
+              moveToCart={moveToCart}
+              addToCart={addToCart}
+            />
+          }
+        />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
-      <Footer />
+      {!hideFooter && <Footer />}
     </>
   );
 }
