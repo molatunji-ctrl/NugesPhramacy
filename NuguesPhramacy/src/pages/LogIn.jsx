@@ -50,6 +50,9 @@ function LogIn() {
 
           <button
             type="button"
+            onClick={() => {
+              window.location.href = "http://localhost:5000/auth/google";
+            }}
             className="flex items-center justify-center rounded-xl border border-gray-300 py-2.5 font-semibold text-[#100F27]"
           >
             <img src={googleIcon} alt="Google" className="mr-2 h-5 w-5" />
