@@ -228,7 +228,7 @@ function SignIn() {
 
         <div className="mt-4 text-center">
           <Link
-            to="/"
+            to="/home"
             className="text-sm text-[#6A7282] transition-colors duration-200 hover:text-[#1B1967]"
           >
             <i className="fa-solid fa-arrow-left-long mr-1.5"></i> Back to Home
