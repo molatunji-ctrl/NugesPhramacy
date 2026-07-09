@@ -6,30 +6,43 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 function LogIn() {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [navigating, setNavigating] = useState(false);
 
-  // This should take user to the SignUp page, not /home
   const goToSignIn = (e) => {
     e.preventDefault();
     setNavigating(true);
-    setTimeout(() => navigate("/signin"), 500);
+
+    setTimeout(() => {
+      navigate("/signin");
+    }, 500);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setLoading(true);
     setMessage("");
+    setMessageType("");
 
     try {
       const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // important for JWT cookie
-        body: JSON.stringify({ email, password }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+        }),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -40,16 +53,15 @@ function LogIn() {
         );
       }
 
-      // Optional: display message briefly
+      setMessageType("success");
       setMessage(data.message || "Login successful");
-      console.log("Backend response:", data);
 
-       localStorage.setItem("isAuthenticated", "true");
-    localStorage.setItem("userEmail", email.toLowerCase().trim());
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userEmail", email.toLowerCase().trim());
 
-      // Route to /home after successful login
       navigate("/home", { replace: true });
     } catch (error) {
+      setMessageType("error");
       setMessage(error.message || "Login failed");
     } finally {
       setLoading(false);
@@ -67,12 +79,18 @@ function LogIn() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1B1967] text-lg font-semibold text-white">
             N
           </div>
-          <h3 className="text-2xl font-semibold text-[#1B1967]">Nuges Pharmaceuticals</h3>
+
+          <h3 className="text-2xl font-semibold text-[#1B1967]">
+            Nuges Pharmaceuticals
+          </h3>
         </header>
 
-        <main className="flex w-full flex-col gap-6 rounded-xl border border-gray-200 bg-[#FFFFFF] px-8 py-8 shadow-sm transition-shadow duration-300 hover:shadow-md">
+        <main className="flex w-full flex-col gap-6 rounded-xl border border-gray-200 bg-white px-8 py-8 shadow-sm transition-shadow duration-300 hover:shadow-md">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-[#090F27]">Welcome back</h1>
+            <h1 className="text-2xl font-semibold text-[#090F27]">
+              Welcome back
+            </h1>
+
             <h3 className="text-sm text-[#6A7282]">
               Sign in to track orders and manage your profile.
             </h3>
@@ -99,21 +117,24 @@ function LogIn() {
               autoComplete="email"
               required
             />
+
             <input
               type="password"
-              placeholder="Password (min 6 chars)"
+              placeholder="Password"
               className="rounded-xl border border-gray-300 px-3 py-2.5 outline-none transition-all duration-200 focus:border-[#1B1967] focus:ring-2 focus:ring-[#1B1967]/15"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               required
             />
+
             <a
               href="#"
               className="text-[13px] font-semibold text-[#1B1967] transition-opacity duration-200 hover:opacity-70"
             >
               Forgot password?
             </a>
+
             <button
               type="submit"
               disabled={loading}
@@ -121,7 +142,8 @@ function LogIn() {
             >
               {loading ? (
                 <>
-                  <i className="fa-solid fa-spinner animate-spin"></i> Signing in…
+                  <i className="fa-solid fa-spinner animate-spin"></i>
+                  Signing in…
                 </>
               ) : (
                 "Sign in"
@@ -130,13 +152,23 @@ function LogIn() {
           </form>
 
           {message && (
-            <p className="animate-fade-in-up text-sm text-center text-[#1B1967]">
+            <p
+              role="alert"
+              className={`text-center rounded-lg px-3 py-2 text-sm ${
+                messageType === "success"
+                  ? "border border-green-100 bg-green-50 text-green-700"
+                  : "border border-red-100 bg-red-50 text-red-700"
+              }`}
+            >
               {message}
             </p>
           )}
 
           <div className="flex items-center justify-center gap-1">
-            <h2 className="text-[14px] font-medium text-[#5B6379]">New to Nuges?</h2>
+            <h2 className="text-[14px] font-medium text-[#5B6379]">
+              New to Nuges?
+            </h2>
+
             <a
               href="/signin"
               onClick={goToSignIn}
@@ -164,6 +196,7 @@ function LogIn() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F9FCFF]/80 backdrop-blur-sm animate-fade-in-up">
           <div className="flex flex-col items-center gap-3">
             <i className="fa-solid fa-spinner animate-spin text-3xl text-[#1B1967]"></i>
+
             <p className="text-sm font-medium text-[#1B1967]">
               Taking you to create an account…
             </p>
