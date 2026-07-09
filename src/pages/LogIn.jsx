@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import googleIcon from "../assets/Icons/google.ico";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_URL || "http://np-backend-4ee5.onrender.com";
 
 function LogIn() {
   const navigate = useNavigate();
