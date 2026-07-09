@@ -80,7 +80,7 @@ function AppLayout() {
       )}
       <div className={hideNavbar ? "" : "pt-24"}>
       <Routes>
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/" element={<Navigate to="/signin" replace />} />
         <Route
           path="/home"
           element={
@@ -138,6 +138,7 @@ function AppLayout() {
         />
         <Route path="/profile" element={<Profile />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/home" element={<Home />} />
 
 <Route
   path="/checkout"
