@@ -24,7 +24,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               N
             </div>
             <div className="hidden sm:block">
-              <h2 className="text-lg font-bold text-[#23195f]">Nuges</h2>
+              <h2 className="text-lg font-bold text-[#23195f]">Nugues</h2>
               <p className="text-[11px] tracking-widest text-gray-500">PHARMACEUTICALS</p>
             </div>
           </Link>
