@@ -3,7 +3,7 @@
   --------
   Main pharmacy shop page for browsing and filtering medications.
   Renders a sticky sidebar with category/condition filters and a main product area.
-  Includes skeleton loading state, mobile filter drawer, large-text toggle,
+  Includes skeleton loading state, mobile filter drawer,
   scroll-to-top button, fixed help bar, and fixed cart button.
 */
 
@@ -132,7 +132,7 @@ function ActiveFilterChip({ active, onClear }) {
 // EMPTY PRODUCT STATE
 // ---------------------------------------------------------------------------
 
-function EmptyProductState({ active, onFocusSearch }) {
+function EmptyProductState({ active }) {
   return (
     <div className="flex min-h-[600px] flex-col items-center justify-center text-center">
       {/* Icon */}
@@ -160,7 +160,7 @@ function EmptyProductState({ active, onFocusSearch }) {
       </p>
 
       {/* Actions */}
-      <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:gap-5">
+      <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:gap-5 sm:justify-center">
         <Link
           to="/home"
           className="inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-lg font-semibold text-white shadow-sm transition hover:opacity-90"
@@ -169,20 +169,15 @@ function EmptyProductState({ active, onFocusSearch }) {
           <i className="fa-solid fa-house"></i>
           Back to Home
         </Link>
-        <button
-          onClick={onFocusSearch}
-          className="inline-flex items-center justify-center gap-2 rounded-full border-2 bg-white px-8 py-4 text-lg font-semibold transition hover:bg-[#EEF0FF]"
-          style={{ borderColor: BRAND_DARK, color: BRAND_DARK }}
-        >
-          <i className="fa-solid fa-magnifying-glass"></i>
-          Search medications
-        </button>
       </div>
 
-      <button className="mt-5 inline-flex items-center justify-center gap-2 rounded-full border-2 border-orange-200 bg-orange-50 px-8 py-4 text-lg font-semibold text-orange-700 transition hover:bg-orange-100">
+      <Link 
+        to="/contact"
+        className="mt-5 inline-flex items-center justify-center gap-2 rounded-full border-2 border-orange-200 bg-orange-50 px-8 py-4 text-lg font-semibold text-orange-700 transition hover:bg-orange-100"
+      >
         <i className="fa-solid fa-envelope"></i>
         Request this medication
-      </button>
+      </Link>
     </div>
   );
 }
@@ -199,10 +194,6 @@ function Shop() {
   const [isLoading, setIsLoading]         = useState(true);
   const [hasScrolled, setHasScrolled]     = useState(false);
   const [searchQuery, setSearchQuery]     = useState("");
-  // Controls the prescription upload modal
-  const [isUploadOpen, setIsUploadOpen]   = useState(false);
-  const [uploadedFile, setUploadedFile]   = useState(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   // Replace with real cart count from context / global state
   const cartCount = 0;
@@ -237,14 +228,6 @@ function Shop() {
   function handleClearFilter() { setActiveFilter(null); }
 
   function handleScrollToTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
-
-  function handleFocusSearch() {
-    const input = document.getElementById("medication-search");
-    if (input) {
-      input.focus();
-      if (window.innerWidth < 1024) setIsMobileOpen(true);
-    }
-  }
 
   return (
     <section className="bg-[#F6F7FB] min-h-screen px-4 py-10 sm:px-6 lg:px-10">
@@ -313,7 +296,7 @@ function Shop() {
               <SkeletonSidebar />
             ) : (
               <>
-                {/* Search */}
+                {/* Search - KEPT */}
                 <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-[#141432]">Find a Medication</h3>
                   <div className="relative mt-4">
@@ -428,10 +411,7 @@ function Shop() {
             {isLoading ? (
               <SkeletonMain />
             ) : (
-              <EmptyProductState
-                active={activeFilter}
-                onFocusSearch={handleFocusSearch}
-              />
+              <EmptyProductState active={activeFilter} />
             )}
           </main>
         </div>
