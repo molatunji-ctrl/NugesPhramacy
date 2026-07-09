@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import googleLogo from "../assets/Icons/google.ico";
 
-const API_BASE = import.meta.env.VITE_API_URL;
+const API_BASE = import.meta.env.VITE_API_URL || "https://np-backend-4ee5.onrender.com";
 
 function SignIn() {
   const navigate = useNavigate();
