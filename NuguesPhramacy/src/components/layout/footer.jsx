@@ -38,13 +38,13 @@ function Footer() {
             <h3 className="text-sm font-semibold text-[#23195f]">Company</h3>
             <ul className="mt-5 space-y-3 text-sm text-gray-600">
               <li>
-                <Link to="/About" className="hover:text-[#23195f]">About us</Link>
+                <a href="/about" className="hover:text-[#23195f]">About us</a>
               </li>
               <li>
-                <Link to="/Service" className="hover:text-[#23195f]">Services</Link>
+                <a href="/service" className="hover:text-[#23195f]">Services</a>
               </li>
               <li>
-                <Link to="/Contact" className="hover:text-[#23195f]">Contact</Link>
+                <a href="/contact" className="hover:text-[#23195f]">Contact</a>
               </li>
               <li>
                 <a href="#" className="hover:text-[#23195f]">Careers</a>

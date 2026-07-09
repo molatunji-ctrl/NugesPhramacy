@@ -4,9 +4,6 @@ import SignIn from "./pages/SignIn";
 import LogIn from "./pages/LogIn";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
-import Service from "./pages/Service";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import Navbar from "./components/layout/Navbar";
@@ -94,9 +91,33 @@ function AppLayout() {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/login" element={<LogIn />} />
         <Route path="/Shop" element={<Shop />} />
-        <Route path="/About" element={<About />} />
-        <Route path="/Service" element={<Service />} />
-        <Route path="/Contact" element={<Contact />} />
+        <Route path="/about"
+          element={
+            <Home
+              addToCart={addToCart}
+              addToWishlist={addToWishlist}
+              wishlist={wishlist}
+            />
+          }
+        />
+        <Route path="/service"
+          element={
+            <Home
+              addToCart={addToCart}
+              addToWishlist={addToWishlist}
+              wishlist={wishlist}
+            />
+          }
+        />
+        <Route path="/contact"
+          element={
+            <Home
+              addToCart={addToCart}
+              addToWishlist={addToWishlist}
+              wishlist={wishlist}
+            />
+          }
+        />
         <Route
           path="/cart"
           element={<Cart cart={cart} setCart={setCart} />}

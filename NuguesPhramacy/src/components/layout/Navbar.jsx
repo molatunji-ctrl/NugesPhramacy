@@ -12,6 +12,8 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
         : `${baseClass} text-gray-700 hover:text-[#23195f]`;
   };
 
+  const anchorClass = "relative py-1 transition-all duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-[#23195f] after:transition-transform after:duration-300 hover:after:origin-bottom-left hover:after:scale-x-100 text-gray-700 hover:text-[#23195f]";
+
   return (
       <div className="fixed inset-x-0 top-0 z-50 flex h-20 items-center justify-between gap-4 px-4 md:px-8">
 
@@ -33,9 +35,9 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           <nav className="flex items-center gap-6">
             <NavLink to="/home" className={linkClass}>Home</NavLink>
             <NavLink to="/Shop" className={linkClass}>Shop</NavLink>
-            <NavLink to="/Service" className={linkClass}>Services</NavLink>
-            <NavLink to="/About" className={linkClass}>About</NavLink>
-            <NavLink to="/Contact" className={linkClass}>Contact</NavLink>
+            <Link to="/service" className={anchorClass}>Services</Link>
+            <Link to="/about" className={anchorClass}>About</Link>
+            <Link to="/contact" className={anchorClass}>Contact</Link>
           </nav>
 
           <div className="h-6 w-px bg-gray-300"></div>
@@ -91,9 +93,9 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               <div className="mx-auto max-w-7xl px-6 py-4 flex flex-col space-y-4 items-start">
                 <NavLink to="/home" className={linkClass} onClick={() => setOpen(false)}>Home</NavLink>
                 <NavLink to="/Shop" className={linkClass} onClick={() => setOpen(false)}>Shop</NavLink>
-                <NavLink to="/Service" className={linkClass} onClick={() => setOpen(false)}>Services</NavLink>
-                <NavLink to="/About" className={linkClass} onClick={() => setOpen(false)}>About</NavLink>
-                <NavLink to="/Contact" className={linkClass} onClick={() => setOpen(false)}>Contact</NavLink>
+                <Link to="/service" className={anchorClass} onClick={() => setOpen(false)}>Services</Link>
+                <Link to="/about" className={anchorClass} onClick={() => setOpen(false)}>About</Link>
+                <Link to="/contact" className={anchorClass} onClick={() => setOpen(false)}>Contact</Link>
 
                 <div className="w-full h-px bg-gray-200 my-2"></div>
 
