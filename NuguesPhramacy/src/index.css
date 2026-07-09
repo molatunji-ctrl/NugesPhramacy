@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+*{
+  font-family: "Manrope", sans-serif;
+}
+
 /* Skeleton shimmer animation — whitish grey, distinct from white card bg */
 @utility skeleton {
   position: relative;
