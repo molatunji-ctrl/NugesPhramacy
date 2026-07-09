@@ -11,6 +11,7 @@ import Footer from "./components/layout/footer";
 import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
+import Contact from "./pages/Contact";
 
 function AppLayout() {
   const location = useLocation();
@@ -18,7 +19,6 @@ function AppLayout() {
   const hideNavbar = ACCOUNT_PAGE_PATHS.includes(location.pathname);
   const hideFooter = hideNavbar;
 
-  // Empty starter state — no seed data
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
 
@@ -35,7 +35,7 @@ function AppLayout() {
         {
           id: product.id,
           name: product.name,
-          brand: product.brand || (product.category?.toUpperCase() || "NUGES"),
+          brand: product.brand || product.category?.toUpperCase() || "NUGES",
           type: product.type || "PHARMACY",
           price: product.price,
           qty: 1,
@@ -53,7 +53,7 @@ function AppLayout() {
         {
           id: product.id,
           name: product.name,
-          brand: product.brand || (product.category?.toUpperCase() || "NUGES"),
+          brand: product.brand || product.category?.toUpperCase() || "NUGES",
           type: product.type || "PHARMACY",
           price: product.price,
           image: product.image,
@@ -79,81 +79,71 @@ function AppLayout() {
         <Navbar cartCount={cartCount} wishlistCount={wishlist.length} />
       )}
       <div className={hideNavbar ? "" : "pt-24"}>
-      <Routes>
-        <Route path="/" element={<Navigate to="/signin" replace />} />
-        <Route
-          path="/home"
-          element={
-            <Home
-              addToCart={addToCart}
-              addToWishlist={addToWishlist}
-              wishlist={wishlist}
-            />
-          }
-        />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/login" element={<LogIn />} />
-        <Route path="/Shop" element={<Shop />} />
-        <Route path="/about"
-          element={
-            <Home
-              addToCart={addToCart}
-              addToWishlist={addToWishlist}
-              wishlist={wishlist}
-            />
-          }
-        />
-        <Route path="/service"
-          element={
-            <Home
-              addToCart={addToCart}
-              addToWishlist={addToWishlist}
-              wishlist={wishlist}
-            />
-          }
-        />
-        <Route path="/contact"
-          element={
-            <Home
-              addToCart={addToCart}
-              addToWishlist={addToWishlist}
-              wishlist={wishlist}
-            />
-          }
-        />
-        <Route
-          path="/cart"
-          element={<Cart cart={cart} setCart={setCart} />}
-        />
-        <Route
-          path="/wishlist"
-          element={
-            <Wishlist
-              wishlist={wishlist}
-              removeFromWishlist={removeFromWishlist}
-              moveToCart={moveToCart}
-              addToCart={addToCart}
-            />
-          }
-        />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/home" element={<Home />} />
-
-<Route
-  path="/checkout"
-  element={
-    <Checkout
-      cart={cart}
-      setCart={setCart}
-      deliveryFee={1500}
-      vatRate={0.075}
-      currencySymbol="₦"
-    />
-  }
-/>
-        <Route path="*" element={<Navigate to="/home" replace />} />
-      </Routes>
+        <Routes>
+          <Route path="/" element={<Navigate to="/signin" replace />} />
+          <Route
+            path="/home"
+            element={
+              <Home
+                addToCart={addToCart}
+                addToWishlist={addToWishlist}
+                wishlist={wishlist}
+              />
+            }
+          />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/login" element={<LogIn />} />
+          {/* Shop route - normalized to lowercase /shop */}
+          <Route path="/shop" element={<Shop />} />
+          <Route
+            path="/about"
+            element={
+              <Home
+                addToCart={addToCart}
+                addToWishlist={addToWishlist}
+                wishlist={wishlist}
+              />
+            }
+          />
+          <Route
+            path="/service"
+            element={
+              <Home
+                addToCart={addToCart}
+                addToWishlist={addToWishlist}
+                wishlist={wishlist}
+              />
+            }
+          />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />
+          <Route
+            path="/wishlist"
+            element={
+              <Wishlist
+                wishlist={wishlist}
+                removeFromWishlist={removeFromWishlist}
+                moveToCart={moveToCart}
+                addToCart={addToCart}
+              />
+            }
+          />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route
+            path="/checkout"
+            element={
+              <Checkout
+                cart={cart}
+                setCart={setCart}
+                deliveryFee={1500}
+                vatRate={0.075}
+                currencySymbol="₦"
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
       </div>
       {!hideFooter && <Footer />}
     </>

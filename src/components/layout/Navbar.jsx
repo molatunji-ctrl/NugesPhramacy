@@ -4,7 +4,6 @@ import { useState } from "react";
 function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [open, setOpen] = useState(false);
 
-  // Added custom underline styles via Tailwind pseudo-elements
   const linkClass = ({ isActive }) => {
     const baseClass = "relative py-1 transition-all duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-[#23195f] after:transition-transform after:duration-300 hover:after:origin-bottom-left hover:after:scale-x-100";
     return isActive
