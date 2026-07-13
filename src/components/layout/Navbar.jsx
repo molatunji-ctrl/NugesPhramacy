@@ -3,37 +3,37 @@ import { useEffect, useState } from "react";
 
 function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkUser = () => {
-      const savedUser = localStorage.getItem("user");
+    const checkLogin = () => {
       const token = localStorage.getItem("token");
+      const user = localStorage.getItem("user");
 
-      if (savedUser && token) {
-        setUser(JSON.parse(savedUser));
+      if (token || user) {
+        setIsLoggedIn(true);
       } else {
-        setUser(null);
+        setIsLoggedIn(false);
       }
     };
 
-    checkUser();
+    checkLogin();
 
-    window.addEventListener("storage", checkUser);
-    window.addEventListener("authChange", checkUser);
+    window.addEventListener("storage", checkLogin);
+    window.addEventListener("authChange", checkLogin);
 
     return () => {
-      window.removeEventListener("storage", checkUser);
-      window.removeEventListener("authChange", checkUser);
+      window.removeEventListener("storage", checkLogin);
+      window.removeEventListener("authChange", checkLogin);
     };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-    setUser(null);
+    setIsLoggedIn(false);
     window.dispatchEvent(new Event("authChange"));
 
     navigate("/signin");
@@ -110,41 +110,43 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
       {/* Right Actions */}
       <div className="flex items-center gap-3 rounded-full bg-white/60 backdrop-blur-md border border-white/40 px-3 py-2 shadow-sm">
-        {user ? (
+        {isLoggedIn ? (
           <>
-            {/* Account Button */}
+            {/* Account button after login */}
             <Link
               to="/account"
-              className="flex items-center gap-2 rounded-full bg-white px-5 py-2 text-gray-900 border border-gray-200 hover:bg-gray-50"
+              className="flex items-center gap-2 rounded-full bg-white/70 border border-gray-200 px-5 py-2 text-gray-900 font-medium hover:bg-white transition"
             >
-              <i className="fa-regular fa-user"></i>
+              <i className="fa-regular fa-user text-lg"></i>
               <span className="hidden sm:inline">Account</span>
             </Link>
 
-            {/* Logout Button */}
+            {/* Logout icon after login */}
             <button
               onClick={handleLogout}
-              className="h-10 w-10 rounded-full bg-white flex items-center justify-center hover:bg-gray-50"
+              className="h-12 w-12 rounded-full bg-[#f4f7fb] flex items-center justify-center text-gray-900 hover:bg-gray-200 transition"
               title="Logout"
             >
-              <i className="fa-solid fa-arrow-right-from-bracket"></i>
+              <i className="fa-solid fa-arrow-right-from-bracket text-lg"></i>
             </button>
           </>
         ) : (
+          /* Sign In button before login */
           <Link
             to="/signin"
-            className="flex items-center gap-2 rounded-full bg-[#23195f] px-5 py-2 text-white"
+            className="flex items-center gap-2 rounded-full bg-[#23195f] px-7 py-3 text-white font-medium hover:bg-[#1b124d] transition"
           >
-            <i className="fa-regular fa-user"></i>
+            <i className="fa-regular fa-user text-lg"></i>
             <span className="hidden sm:inline">Sign In</span>
           </Link>
         )}
 
+        {/* Wishlist */}
         <Link
           to="/wishlist"
-          className="relative h-10 w-10 rounded-full bg-white flex items-center justify-center hover:bg-gray-50"
+          className="relative h-12 w-12 rounded-full bg-[#f4f7fb] flex items-center justify-center text-gray-900 hover:bg-gray-200 transition"
         >
-          <i className="fa-regular fa-heart"></i>
+          <i className="fa-regular fa-heart text-lg"></i>
 
           {wishlistCount > 0 && (
             <span className="absolute -top-1 -right-1 h-5 min-w-[20px] rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
@@ -153,11 +155,12 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           )}
         </Link>
 
+        {/* Cart */}
         <Link
           to="/cart"
-          className="relative h-10 w-10 rounded-full bg-white flex items-center justify-center hover:bg-gray-50"
+          className="relative h-12 w-12 rounded-full bg-[#f4f7fb] flex items-center justify-center text-gray-900 hover:bg-gray-200 transition"
         >
-          <i className="fa-solid fa-cart-shopping"></i>
+          <i className="fa-solid fa-bag-shopping text-lg"></i>
 
           {cartCount > 0 && (
             <span className="absolute -top-1 -right-1 h-5 min-w-[20px] rounded-full bg-[#23195f] text-white text-xs flex items-center justify-center">
@@ -166,9 +169,10 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           )}
         </Link>
 
+        {/* Mobile menu button */}
         <button
           onClick={() => setOpen(!open)}
-          className="lg:hidden h-10 w-10 rounded-full flex items-center justify-center"
+          className="lg:hidden h-12 w-12 rounded-full bg-[#f4f7fb] flex items-center justify-center"
         >
           <i className="fa-solid fa-bars"></i>
         </button>
@@ -220,7 +224,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
             <div className="w-full h-px bg-gray-200 my-2"></div>
 
-            {user ? (
+            {isLoggedIn ? (
               <>
                 <Link
                   to="/account"
