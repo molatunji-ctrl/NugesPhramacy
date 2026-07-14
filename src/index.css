@@ -5,25 +5,20 @@
 }
 
 /* Skeleton shimmer animation — whitish grey, distinct from white card bg */
-@utility skeleton {
+.skeleton {
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius-md); /* Tailwind v4 alternative to @apply rounded-md */
-  background-color: #ECEFF3; /* soft whitish-grey */
+  border-radius: var(--radius-md);
+  background-color: #ECEFF3;
+}
 
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.85) 50%,
-      transparent 100%
-    );
-    transform: translateX(-100%);
-    animation: shimmer 1.4s infinite;
-  }
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: shimmer 1.4s infinite;
 }
 
 @keyframes shimmer {
@@ -33,7 +28,7 @@
 }
 
 /* Fade + slide-in entrance animation, used on LogIn / SignIn cards */
-@utility animate-fade-in-up {
+.animate-fade-in-up {
   animation: fade-in-up 0.5s ease-out both;
 }
 
@@ -45,5 +40,15 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { api } from "../service/api";
 
-import verveLogo from "../assets/icons/verve.png";
-import mastercardLogo from "../assets/icons/mastercard.jpg";
-import visaLogo from "../assets/icons/visa.png";
+import verveLogo from "../assets/Icons/verve.png";
+import mastercardLogo from "../assets/Icons/mastercard.jpg";
+import visaLogo from "../assets/Icons/visa.png";
 
 // ── helpers ────────────────────────────────────────
 function fmt(n, symbol = "₦") {
@@ -162,7 +163,7 @@ function Checkout({
     if (!shipping.email.trim())     errs.email     = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(shipping.email)) errs.email = "Enter a valid email";
     if (!shipping.phone.trim())     errs.phone     = "Phone number is required";
-    else if (!/^\+?[\d\s\-]{10,}$/.test(shipping.phone)) errs.phone = "Enter a valid phone";
+    else if (!/^\+?[\d\s-]{10,}$/.test(shipping.phone)) errs.phone = "Enter a valid phone";
     if (!shipping.address.trim())   errs.address   = "Address is required";
     if (!shipping.city.trim())      errs.city      = "City is required";
     if (!shipping.state)            errs.state     = "Select a state";
@@ -199,14 +200,40 @@ function Checkout({
 
   // ── order placed ─────────────────────────────────
   const [placing, setPlacing] = useState(false);
+  const [orderError, setOrderError] = useState("");
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     setPlacing(true);
-    setTimeout(() => {
-      setPlacing(false);
+    setOrderError("");
+
+    const orderPayload = {
+      items: cart.map((item) => ({
+        productId: item.id,
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.qty,
+        qty: item.qty,
+      })),
+      shippingAddress: shipping,
+      shipping,
+      paymentMethod: payMethod,
+      totals: { subtotal, deliveryFee, vat, total },
+      subtotal,
+      deliveryFee,
+      vat,
+      total,
+    };
+
+    try {
+      const created = await api.createOrder(orderPayload);
       setCart && setCart([]);
-      navigate("/order-success");
-    }, 2000);
+      navigate("/orders", { replace: true, state: { justPlaced: true, order: created } });
+    } catch (error) {
+      setOrderError(error.status === 403 ? "Please sign in before placing your order." : error.message || "Unable to place order.");
+    } finally {
+      setPlacing(false);
+    }
   };
 
   // ── step nav ─────────────────────────────────────
@@ -619,6 +646,13 @@ function Checkout({
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {orderError && (
+              <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm font-semibold text-rose-600">
+                <i className="fa-solid fa-circle-exclamation mr-2"></i>
+                {orderError}
               </div>
             )}
 

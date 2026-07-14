@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import verveLogo from "../assets/icons/verve.png";
-import mastercardLogo from "../assets/icons/mastercard.jpg";
-import visaLogo from "../assets/icons/visa.png";
+import verveLogo from "../assets/Icons/verve.png";
+import mastercardLogo from "../assets/Icons/mastercard.jpg";
+import visaLogo from "../assets/Icons/visa.png";
 
 function SkeletonLine() {
   return <div className="skeleton h-5 w-full"></div>;
@@ -51,6 +51,7 @@ function Cart({
   onCheckout,
 }) {
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 800);
@@ -75,6 +76,21 @@ function Cart({
 
   const removeItem = (id) => setCart((prev) => prev.filter((item) => item.id !== id));
   const clearCart = () => setCart([]);
+
+  // ── toast helper ──────────────────────────────
+  const showToast = (msg) => {
+    setToast({ visible: true, message: msg });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 3000);
+  };
+
+  // ── checkout handler ──────────────────────────
+  const handleCheckout = () => {
+    if (cart.length === 0) {
+      showToast("Your cart is empty. Please add items before checking out.");
+      return;
+    }
+    onCheckout?.();
+  };
 
   // ── totals ────────────────────────────────────
   const itemCount = cart.reduce((sum, item) => sum + item.qty, 0);
@@ -330,9 +346,8 @@ function Cart({
 
                     {/* checkout button */}
                     <button
-                      onClick={onCheckout}
-                      disabled={cart.length === 0}
-                      className="mt-6 w-full rounded-full bg-gradient-to-r from-[#23195f] to-[#5B3DF5] py-4 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={handleCheckout}
+                      className="mt-6 w-full rounded-full bg-[#23195f] py-4 text-base font-semibold text-white transition hover:opacity-90"
                     >
                       Proceed to Checkout →
                     </button>
@@ -375,6 +390,17 @@ function Cart({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Bottom Toast Notification ─────────────── */}
+      <div
+        role="alert"
+        className={`fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#141432] px-6 py-3.5 text-sm font-medium text-white shadow-2xl transition-all duration-300 ease-out ${
+          toast.visible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"
+        }`}
+      >
+        <i className="fa-solid fa-circle-exclamation text-amber-400"></i>
+        {toast.message}
       </div>
     </section>
   );
