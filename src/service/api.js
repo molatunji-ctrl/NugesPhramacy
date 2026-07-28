@@ -129,6 +129,13 @@ export async function tryApi(paths, options = {}) {
   throw lastError;
 }
 
+// ── Promo codes (client-side fallback if backend route isn't live yet) ──
+export const PROMO_CODES = {
+  SAVE10: { type: "percent", value: 10, label: "10% off your order" },
+  SAVE20: { type: "percent", value: 20, label: "20% off your order" },
+  WELCOME5000: { type: "flat", value: 5000, label: "₦5,000 off your order" },
+};
+
 export const api = {
   login: (payload) =>
     apiRequest("/auth/login", {
@@ -188,6 +195,18 @@ export const api = {
     tryApi(["/orders", "/order", "/checkout"], {
       method: "POST",
       data: order,
+    }),
+
+  applyPromoCode: (code) =>
+    tryApi(["/promo/validate", "/promotions/validate", "/coupons/apply"], {
+      method: "POST",
+      data: { code },
+    }),
+
+  sendContactMessage: (payload) =>
+    tryApi(["/contact", "/contact-us", "/messages", "/inquiries"], {
+      method: "POST",
+      data: payload,
     }),
 };
 

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../service/api";
-
 import verveLogo from "../assets/Icons/verve.png";
 import mastercardLogo from "../assets/Icons/mastercard.jpg";
 import visaLogo from "../assets/Icons/visa.png";
+
+const FLUTTERWAVE_PUBLIC_KEY = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || "";
 
 // ── helpers ────────────────────────────────────────
 function fmt(n, symbol = "₦") {
@@ -119,9 +120,9 @@ const NG_STATES = [
 
 // ── Payment methods ────────────────────────────────
 const PAYMENT_METHODS = [
-  { id: "card",   label: "Debit / Credit Card", icon: "fa-solid fa-credit-card" },
-  { id: "transfer", label: "Bank Transfer",     icon: "fa-solid fa-building-columns" },
-  { id: "ussd",   label: "USSD",                icon: "fa-solid fa-mobile-screen" },
+  { id: "card",     label: "Card / Bank / USSD", icon: "fa-solid fa-credit-card", sub: "Secure checkout via Flutterwave" },
+  { id: "transfer", label: "Bank Transfer",       icon: "fa-solid fa-building-columns", sub: "Manual transfer, verified within 1 day" },
+  { id: "ussd",     label: "USSD (manual)",       icon: "fa-solid fa-mobile-screen", sub: "Dial your bank's short code" },
 ];
 
 // ══════════════════════════════════════════════════
@@ -133,14 +134,31 @@ function Checkout({
   deliveryFee = 0,
   vatRate = 0.075,
   currencySymbol = "₦",
+  promoDiscount,
+  onRemovePromo,
 }) {
   const navigate = useNavigate();
+
+  // ── load Flutterwave inline script once ────────────
+  useEffect(() => {
+    if (document.getElementById("flutterwave-inline-script")) return;
+    const script = document.createElement("script");
+    script.id = "flutterwave-inline-script";
+    script.src = "https://checkout.flutterwave.com/v3.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
   // ── totals ──────────────────────────────────────
   const itemCount = cart.reduce((s, i) => s + i.qty, 0);
   const subtotal  = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const vat       = subtotal * vatRate;
-  const total     = subtotal + deliveryFee + vat;
+  const discount  = promoDiscount
+    ? promoDiscount.type === "percent"
+      ? subtotal * (promoDiscount.value / 100)
+      : Math.min(promoDiscount.value, subtotal)
+    : 0;
+  const vat       = (subtotal - discount) * vatRate;
+  const total     = subtotal - discount + deliveryFee + vat;
   const vatLabel  = `VAT (${(vatRate * 100).toFixed(1)}%)`;
 
   // ── steps ───────────────────────────────────────
@@ -151,6 +169,7 @@ function Checkout({
     firstName: "", lastName: "", email: "", phone: "",
     address: "", city: "", state: "", zip: "",
   });
+
   const [shippingErrors, setShippingErrors] = useState({});
 
   const handleShipping = (field) => (e) =>
@@ -170,67 +189,93 @@ function Checkout({
     return errs;
   };
 
-  // ── payment form ─────────────────────────────────
-  const [payMethod, setPayMethod]   = useState("card");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName]     = useState("");
-  const [expiry, setExpiry]         = useState("");
-  const [cvv, setCvv]               = useState("");
-  const [payErrors, setPayErrors]   = useState({});
-  const [saveCard, setSaveCard]     = useState(false);
-
-  const formatCardNumber = (v) =>
-    v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
-
-  const formatExpiry = (v) => {
-    const d = v.replace(/\D/g, "").slice(0, 4);
-    return d.length >= 3 ? d.slice(0, 2) + "/" + d.slice(2) : d;
-  };
-
-  const validatePayment = () => {
-    const errs = {};
-    if (payMethod === "card") {
-      if (!cardName.trim())                         errs.cardName   = "Name on card is required";
-      if (cardNumber.replace(/\s/g, "").length < 16) errs.cardNumber = "Enter a valid 16-digit card number";
-      if (!expiry || expiry.length < 5)             errs.expiry     = "Enter a valid expiry (MM/YY)";
-      if (!cvv || cvv.length < 3)                   errs.cvv        = "Enter a valid CVV";
-    }
-    return errs;
-  };
+  // ── payment method ───────────────────────────────
+  const [payMethod, setPayMethod] = useState("card");
 
   // ── order placed ─────────────────────────────────
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState("");
 
+  // ── Flutterwave popup ───────────────────────────────
+  const openFlutterwave = () =>
+    new Promise((resolve, reject) => {
+      if (!window.FlutterwaveCheckout) {
+        reject(new Error("Payment gateway is still loading. Please try again in a moment."));
+        return;
+      }
+      
+      window.FlutterwaveCheckout({
+        public_key: FLUTTERWAVE_PUBLIC_KEY,
+        tx_ref: `NUGES-${Date.now()}`,
+        amount: total,
+        currency: "NGN",
+        payment_options: "card, banktransfer, ussd",
+        customer: {
+          email: shipping.email,
+          phone_number: shipping.phone,
+          name: `${shipping.firstName} ${shipping.lastName}`,
+        },
+        customizations: {
+          title: "Nuges Pharmacy",
+          description: "Payment for order",
+          logo: "https://your-logo-url-here.png", // Optional: Add your live logo URL here
+        },
+        callback: (response) => {
+          if (response.status === "successful") {
+            resolve(response.transaction_id || response.tx_ref);
+          } else {
+            reject(new Error("Payment was not successful."));
+          }
+        },
+        onclose: () => reject(new Error("Payment window closed before completing payment.")),
+      });
+    });
+
   const placeOrder = async () => {
     setPlacing(true);
     setOrderError("");
 
-    const orderPayload = {
-      items: cart.map((item) => ({
-        productId: item.id,
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.qty,
-        qty: item.qty,
-      })),
-      shippingAddress: shipping,
-      shipping,
-      paymentMethod: payMethod,
-      totals: { subtotal, deliveryFee, vat, total },
-      subtotal,
-      deliveryFee,
-      vat,
-      total,
-    };
-
     try {
+      let paymentReference = null;
+
+      if (payMethod === "card") {
+        if (!FLUTTERWAVE_PUBLIC_KEY) {
+          throw new Error("Card payment isn't configured yet — please choose Bank Transfer or USSD for now.");
+        }
+        paymentReference = await openFlutterwave();
+      }
+
+      const orderPayload = {
+        items: cart.map((item) => ({
+          productId: item.id,
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.qty,
+          qty: item.qty,
+        })),
+        shippingAddress: shipping,
+        shipping,
+        paymentMethod: payMethod,
+        paymentReference,
+        paymentStatus: payMethod === "card" ? "paid" : "pending",
+        promoCode: promoDiscount?.code || null,
+        discount,
+        totals: { subtotal, discount, deliveryFee, vat, total },
+        subtotal,
+        deliveryFee,
+        vat,
+        total,
+      };
+
       const created = await api.createOrder(orderPayload);
       setCart && setCart([]);
+      onRemovePromo && onRemovePromo();
+      
       navigate("/orders", { replace: true, state: { justPlaced: true, order: created } });
+
     } catch (error) {
-      setOrderError(error.status === 403 ? "Please sign in before placing your order." : error.message || "Unable to place order.");
+      setOrderError(error.message || "Unable to place order.");
     } finally {
       setPlacing(false);
     }
@@ -242,11 +287,6 @@ function Checkout({
       const errs = validateShipping();
       if (Object.keys(errs).length) { setShippingErrors(errs); return; }
       setShippingErrors({});
-    }
-    if (step === 2) {
-      const errs = validatePayment();
-      if (Object.keys(errs).length) { setPayErrors(errs); return; }
-      setPayErrors({});
     }
     setStep((p) => p + 1);
   };
@@ -377,128 +417,42 @@ function Checkout({
                     <button
                       key={m.id}
                       onClick={() => setPayMethod(m.id)}
-                      className={`flex flex-row items-center gap-3 rounded-2xl border-2 p-4 text-sm font-semibold transition sm:flex-col sm:gap-2 ${
+                      className={`flex flex-row items-center gap-3 rounded-2xl border-2 p-4 text-left transition sm:flex-col sm:items-center sm:gap-2 sm:text-center ${
                         payMethod === m.id
                           ? "border-[#23195f] bg-[#EEF0FF] text-[#23195f]"
                           : "border-gray-200 bg-white text-slate-500 hover:border-[#23195f]/40"
                       }`}
                     >
                       <i className={`${m.icon} text-xl`}></i>
-                      <span className="text-left text-xs leading-tight sm:text-center">{m.label}</span>
+                      <span>
+                        <span className="block text-sm font-semibold leading-tight">{m.label}</span>
+                        <span className="block text-xs font-normal leading-tight text-slate-400">{m.sub}</span>
+                      </span>
                     </button>
                   ))}
                 </div>
 
-                {/* card fields */}
+                {/* card / flutterwave info */}
                 {payMethod === "card" && (
-                  <div className="mt-8 space-y-5">
-                    {/* card number with logo */}
-                    <div className="col-span-2">
-                      <label className="mb-1.5 block text-sm font-semibold text-[#141432]">
-                        Card Number
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="0000 0000 0000 0000"
-                          value={cardNumber}
-                          onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                          className={`h-12 w-full rounded-xl border px-4 pr-28 text-base outline-none transition ${
-                            payErrors.cardNumber
-                              ? "border-rose-400 bg-rose-50"
-                              : "border-gray-200 bg-slate-50 focus:border-[#23195f]"
-                          }`}
-                        />
-                        <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
-                          <img src={verveLogo}      alt="Verve"      className="h-5 w-auto object-contain opacity-70" />
-                          <img src={mastercardLogo} alt="Mastercard" className="h-6 w-auto object-contain opacity-70" />
-                          <img src={visaLogo}       alt="Visa"       className="h-4 w-auto object-contain opacity-70" />
-                        </div>
-                      </div>
-                      {payErrors.cardNumber && (
-                        <p className="mt-1 text-xs text-rose-500">{payErrors.cardNumber}</p>
-                      )}
+                  <div className="mt-8 rounded-2xl bg-[#EEF0FF] p-6 text-sm text-[#23195f] space-y-3">
+                    <p className="inline-flex items-center gap-2 font-semibold text-base">
+                      <i className="fa-solid fa-shield-halved"></i> Secure checkout
+                    </p>
+                    <p className="text-slate-600">
+                      When you place your order, a secure Flutterwave window will open where you can
+                      pay by card, bank account, or USSD — your details never touch our servers.
+                    </p>
+                    <div className="flex items-center gap-3 pt-1">
+                      <img src={verveLogo}      alt="Verve"      className="h-6 w-auto object-contain opacity-70" />
+                      <img src={mastercardLogo} alt="Mastercard" className="h-7 w-auto object-contain opacity-70" />
+                      <img src={visaLogo}       alt="Visa"       className="h-5 w-auto object-contain opacity-70" />
                     </div>
-
-                    {/* name on card */}
-                    <div>
-                      <label className="mb-1.5 block text-sm font-semibold text-[#141432]">
-                        Name on Card
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="John Doe"
-                        value={cardName}
-                        onChange={(e) => setCardName(e.target.value)}
-                        className={`h-12 w-full rounded-xl border px-4 text-base outline-none transition ${
-                          payErrors.cardName
-                            ? "border-rose-400 bg-rose-50"
-                            : "border-gray-200 bg-slate-50 focus:border-[#23195f]"
-                        }`}
-                      />
-                      {payErrors.cardName && (
-                        <p className="mt-1 text-xs text-rose-500">{payErrors.cardName}</p>
-                      )}
-                    </div>
-
-                    {/* expiry + cvv */}
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1.5 block text-sm font-semibold text-[#141432]">
-                          Expiry Date
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="MM/YY"
-                          value={expiry}
-                          onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                          className={`h-12 w-full rounded-xl border px-4 text-base outline-none transition ${
-                            payErrors.expiry
-                              ? "border-rose-400 bg-rose-50"
-                              : "border-gray-200 bg-slate-50 focus:border-[#23195f]"
-                          }`}
-                        />
-                        {payErrors.expiry && (
-                          <p className="mt-1 text-xs text-rose-500">{payErrors.expiry}</p>
-                        )}
-                      </div>
-                      <div>
-                        <label className="mb-1.5 block text-sm font-semibold text-[#141432]">
-                          CVV
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="password"
-                            placeholder="•••"
-                            maxLength={4}
-                            value={cvv}
-                            onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
-                            className={`h-12 w-full rounded-xl border px-4 text-base outline-none transition ${
-                              payErrors.cvv
-                                ? "border-rose-400 bg-rose-50"
-                                : "border-gray-200 bg-slate-50 focus:border-[#23195f]"
-                            }`}
-                          />
-                          <i className="fa-solid fa-lock absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
-                        </div>
-                        {payErrors.cvv && (
-                          <p className="mt-1 text-xs text-rose-500">{payErrors.cvv}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* save card */}
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={saveCard}
-                        onChange={(e) => setSaveCard(e.target.checked)}
-                        className="h-4 w-4 accent-[#23195f]"
-                      />
-                      <span className="text-sm text-slate-600">
-                        Save card for future purchases
-                      </span>
-                    </label>
+                    {!FLUTTERWAVE_PUBLIC_KEY && (
+                      <p className="rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-700">
+                        <i className="fa-solid fa-triangle-exclamation mr-1"></i>
+                        Card payments aren't live yet on this store — choose Bank Transfer or USSD below to continue.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -513,7 +467,7 @@ function Checkout({
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Account Name</span>
-                        <span className="font-semibold">ShopCart Ltd</span>
+                        <span className="font-semibold">Nuges Pharmaceuticals Ltd</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Account Number</span>
@@ -611,11 +565,9 @@ function Checkout({
                     </button>
                   </div>
                   <p className="mt-3 text-sm text-slate-600">
-                    {payMethod === "card" && (
-                      <>Card ending in <strong>{cardNumber.slice(-4)}</strong></>
-                    )}
+                    {payMethod === "card" && "Card / Bank / USSD via Flutterwave"}
                     {payMethod === "transfer" && "Bank Transfer"}
-                    {payMethod === "ussd"     && "USSD Payment"}
+                    {payMethod === "ussd" && "USSD Payment"}
                   </p>
                 </div>
 
@@ -745,6 +697,12 @@ function Checkout({
                       {fmt(subtotal, currencySymbol)}
                     </span>
                   </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Discount ({promoDiscount.code})</span>
+                      <span className="font-semibold">− {fmt(discount, currencySymbol)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-slate-600">
                     <span className="inline-flex items-center gap-1.5">
                       <i className="fa-solid fa-truck text-xs"></i> Delivery Fee

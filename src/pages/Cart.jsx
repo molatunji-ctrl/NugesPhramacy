@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { api, PROMO_CODES } from "../service/api";
 
 import verveLogo from "../assets/Icons/verve.png";
 import mastercardLogo from "../assets/Icons/mastercard.jpg";
@@ -49,9 +50,16 @@ function Cart({
   vatRate = 0.075,
   currencySymbol = "₦",
   onCheckout,
+  promoDiscount,
+  onApplyPromo,
+  onRemovePromo,
 }) {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ visible: false, message: "" });
+
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [applyingPromo, setApplyingPromo] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 800);
@@ -92,11 +100,46 @@ function Cart({
     onCheckout?.();
   };
 
+  // ── promo code handlers ───────────────────────
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+
+    setApplyingPromo(true);
+    setPromoError("");
+
+    try {
+      const result = await api.applyPromoCode(code);
+      onApplyPromo?.({ code, ...result });
+      setPromoInput("");
+    } catch {
+      const local = PROMO_CODES[code];
+      if (local) {
+        onApplyPromo?.({ code, ...local });
+        setPromoInput("");
+      } else {
+        setPromoError("That promo code isn't valid or has expired.");
+      }
+    } finally {
+      setApplyingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    onRemovePromo?.();
+    setPromoError("");
+  };
+
   // ── totals ────────────────────────────────────
   const itemCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const subtotal  = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const vat       = subtotal * vatRate;
-  const total     = subtotal + deliveryFee + vat;
+  const discount  = promoDiscount
+    ? promoDiscount.type === "percent"
+      ? subtotal * (promoDiscount.value / 100)
+      : Math.min(promoDiscount.value, subtotal)
+    : 0;
+  const vat       = (subtotal - discount) * vatRate;
+  const total     = subtotal - discount + deliveryFee + vat;
   const vatLabel  = `VAT (${(vatRate * 100).toFixed(1)}%)`;
 
   return (
@@ -268,16 +311,42 @@ function Cart({
                   <p className="inline-flex items-center gap-2 text-base font-semibold text-[#23195f]">
                     <i className="fa-solid fa-tag"></i> Promo Code
                   </p>
-                  <div className="mt-4 flex gap-3">
-                    <input
-                      type="text"
-                      placeholder="Enter code (e.g. SAVE10)"
-                      className="h-12 flex-1 rounded-xl border border-gray-200 bg-slate-50 px-5 text-base outline-none focus:border-[#23195f] transition"
-                    />
-                    <button className="rounded-xl bg-[#23195f] px-6 text-base font-semibold text-white transition hover:opacity-90">
-                      Apply
-                    </button>
-                  </div>
+
+                  {promoDiscount ? (
+                    <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-5 py-3.5">
+                      <span className="text-sm font-semibold text-emerald-700">
+                        <i className="fa-solid fa-circle-check mr-2"></i>
+                        {promoDiscount.code} applied — {promoDiscount.label}
+                      </span>
+                      <button
+                        onClick={handleRemovePromo}
+                        className="flex-shrink-0 text-sm font-semibold text-rose-500 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mt-4 flex gap-3">
+                        <input
+                          type="text"
+                          value={promoInput}
+                          onChange={(e) => setPromoInput(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                          placeholder="Enter code (e.g. SAVE10)"
+                          className="h-12 flex-1 rounded-xl border border-gray-200 bg-slate-50 px-5 text-base outline-none focus:border-[#23195f] transition"
+                        />
+                        <button
+                          onClick={handleApplyPromo}
+                          disabled={applyingPromo || !promoInput.trim()}
+                          className="rounded-xl bg-[#23195f] px-6 text-base font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {applyingPromo ? <i className="fa-solid fa-spinner animate-spin"></i> : "Apply"}
+                        </button>
+                      </div>
+                      {promoError && <p className="mt-2 text-sm text-rose-500">{promoError}</p>}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -305,6 +374,14 @@ function Cart({
                           {fmt(subtotal)}
                         </span>
                       </div>
+
+                      {/* discount */}
+                      {discount > 0 && (
+                        <div className="flex items-center justify-between text-emerald-600">
+                          <span>Discount ({promoDiscount.code})</span>
+                          <span className="font-semibold">− {fmt(discount)}</span>
+                        </div>
+                      )}
 
                       {/* delivery fee */}
                       <div className="flex items-center justify-between text-slate-600">

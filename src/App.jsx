@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import { api, normalizeList } from "./service/api";
 
+// ── Helpers ────────────────────────────────────────
 function loadLocalArray(key) {
   try {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -21,14 +22,36 @@ function loadLocalArray(key) {
   }
 }
 
+function loadLocalObject(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Route Protection ───────────────────────────────
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+// ── Main Layout ────────────────────────────────────
 function AppLayout() {
   const location = useLocation();
-  const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders"];
+  
+  // Added "/checkout" to hide nav/footer for a distraction-free checkout experience
+  const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders", "/checkout"];
   const hideNavbar = ACCOUNT_PAGE_PATHS.includes(location.pathname.toLowerCase());
   const hideFooter = hideNavbar;
 
   const [cart, setCart] = useState(() => loadLocalArray("cart"));
   const [wishlist, setWishlist] = useState(() => loadLocalArray("wishlist"));
+  const [promoDiscount, setPromoDiscount] = useState(() => loadLocalObject("promoDiscount"));
   const hydrated = useRef(false);
 
   useEffect(() => {
@@ -109,6 +132,16 @@ function AppLayout() {
     removeFromWishlist(item.id);
   };
 
+  const applyPromo = (discount) => {
+    setPromoDiscount(discount);
+    localStorage.setItem("promoDiscount", JSON.stringify(discount));
+  };
+
+  const removePromo = () => {
+    setPromoDiscount(null);
+    localStorage.removeItem("promoDiscount");
+  };
+
   const cartCount = cart.reduce((s, i) => s + Number(i.qty || 0), 0);
 
   return (
@@ -116,20 +149,50 @@ function AppLayout() {
       {!hideNavbar && <Navbar cartCount={cartCount} wishlistCount={wishlist.length} />}
       <div className={hideNavbar ? "" : "pt-24"}>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<Home addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/login" element={<LogIn />} />
           <Route path="/shop" element={<Shop addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} cartCount={cartCount} />} />
-          <Route path="/Shop" element={<Shop addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} cartCount={cartCount} />} />
           <Route path="/about" element={<Home addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} />} />
           <Route path="/service" element={<Home addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} />} />
           <Route path="/contact" element={<Home addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} />} />
-          <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />
+          <Route
+            path="/cart"
+            element={
+              <Cart
+                cart={cart}
+                setCart={setCart}
+                promoDiscount={promoDiscount}
+                onApplyPromo={applyPromo}
+                onRemovePromo={removePromo}
+              />
+            }
+          />
           <Route path="/wishlist" element={<Wishlist wishlist={wishlist} removeFromWishlist={removeFromWishlist} moveToCart={moveToCart} addToCart={addToCart} />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/checkout" element={<Checkout cart={cart} setCart={setCart} deliveryFee={1500} vatRate={0.075} currencySymbol="₦" />} />
+
+          {/* Protected Routes */}
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout
+                  cart={cart}
+                  setCart={setCart}
+                  deliveryFee={1500}
+                  vatRate={0.075}
+                  currencySymbol="₦"
+                  promoDiscount={promoDiscount}
+                  onRemovePromo={removePromo}
+                />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </div>
