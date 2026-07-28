@@ -33,7 +33,9 @@ function loadLocalObject(key) {
 
 // ── Route Protection ───────────────────────────────
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const token = localStorage.getItem("token");
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true" || !!token;
+  
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -44,7 +46,6 @@ const ProtectedRoute = ({ children }) => {
 function AppLayout() {
   const location = useLocation();
   
-  // Added "/checkout" to hide nav/footer for a distraction-free checkout experience
   const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders", "/checkout"];
   const hideNavbar = ACCOUNT_PAGE_PATHS.includes(location.pathname.toLowerCase());
   const hideFooter = hideNavbar;
@@ -54,9 +55,22 @@ function AppLayout() {
   const [promoDiscount, setPromoDiscount] = useState(() => loadLocalObject("promoDiscount"));
   const hydrated = useRef(false);
 
+  // 👉 CAPTURE GOOGLE OAUTH TOKEN FROM URL QUERY PARAMS ON LOAD
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const token = queryParams.get("token");
+
+    if (token) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("isAuthenticated", "true");
+      // Clean up the URL query parameters so it looks neat
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   useEffect(() => {
     let mounted = true;
-    const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+    const isAuthenticated = localStorage.getItem("isAuthenticated") === "true" || !!localStorage.getItem("token");
     if (!isAuthenticated) {
       hydrated.current = true;
       return;
@@ -74,14 +88,14 @@ function AppLayout() {
 
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
-    if (hydrated.current && localStorage.getItem("isAuthenticated") === "true") {
+    if (hydrated.current && (localStorage.getItem("isAuthenticated") === "true" || localStorage.getItem("token"))) {
       api.saveCart(cart).catch(() => {});
     }
   }, [cart]);
 
   useEffect(() => {
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
-    if (hydrated.current && localStorage.getItem("isAuthenticated") === "true") {
+    if (hydrated.current && (localStorage.getItem("isAuthenticated") === "true" || localStorage.getItem("token"))) {
       api.saveWishlist(wishlist).catch(() => {});
     }
   }, [wishlist]);
