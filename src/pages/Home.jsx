@@ -5,6 +5,9 @@ import Contact from "./Contact";
 import About from "./About";
 import Service from "./Service";
 import { FeaturedProducts } from "../components/shop/FeaturedProducts";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTruck, faShieldHalved, faUserDoctor, faPill, faHeartCirclePlus, faBaby, faSparkles, faStethoscope, faShieldCheck } from "@fortawesome/free-solid-svg-icons";
+import { faClock } from "@fortawesome/free-regular-svg-icons";
 
 function Home({ addToCart, addToWishlist, wishlist = [] }) {
   const location = useLocation();
@@ -94,7 +97,7 @@ function Home({ addToCart, addToWishlist, wishlist = [] }) {
           <div className="hidden w-full rounded-full bg-white/90 py-3 shadow-xl backdrop-blur-sm border border-gray-100 md:grid md:grid-cols-4">
             <div className="flex items-center gap-4 px-6 py-3">
               <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]">
-                <i className="fa-solid fa-truck"></i>
+                <FontAwesomeIcon icon={faTruck} />
               </div>
               <div>
                 <div className="text-sm font-semibold text-[#141432]">Free delivery</div>
@@ -104,11 +107,34 @@ function Home({ addToCart, addToWishlist, wishlist = [] }) {
 
             <div className="flex items-center gap-4 border-l border-gray-100 px-6">
               <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]">
-                <i className="fa-solid fa-shield-halved"></i>
+                <FontAwesomeIcon icon={faShieldHalved} />
               </div>
               <div>
                 <div className="text-sm font-semibold text-[#141432]">Genuine products</div>
                 <div className="text-xs text-slate-500">NAFDAC verified</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 border-l border-gray-100 px-6">
+              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]">
+                <FontAwesomeIcon icon={faUserDoctor} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-[#141432]">Expert pharmacists</div>
+                <div className="text-xs text-slate-500">Free consultations</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 border-l border-gray-100 px-6">
+              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]">
+                <FontAwesomeIcon icon={faClock} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-[#141432]">Open 7 days</div>
+                <div className="text-xs text-slate-500">8am — 9pm daily</div>
+              </div>
+            </div>
+          </div>AC verified</div>
               </div>
             </div>
 
@@ -136,17 +162,17 @@ function Home({ addToCart, addToWishlist, wishlist = [] }) {
           {/* mobile strip */}
           <div className="md:hidden mx-auto flex w-full gap-2.5 overflow-x-auto rounded-2xl bg-white/90 py-3 px-3 shadow-md backdrop-blur-sm border border-gray-100 scrollbar-hide">
             {[
-              { title: "Free delivery", subtitle: "Orders over ₦15,000", icon: "fa-truck" },
-              { title: "Genuine products", subtitle: "NAFDAC verified", icon: "fa-shield-halved" },
-              { title: "Expert pharmacists", subtitle: "Free consultations", icon: "fa-user-doctor" },
-              { title: "Open 7 days", subtitle: "8am — 9pm", icon: "fa-clock" },
+              { title: "Free delivery", subtitle: "Orders over ₦15,000", icon: faTruck },
+              { title: "Genuine products", subtitle: "NAFDAC verified", icon: faShieldHalved },
+              { title: "Expert pharmacists", subtitle: "Free consultations", icon: faUserDoctor },
+              { title: "Open 7 days", subtitle: "8am — 9pm", icon: faClock },
             ].map((f) => (
               <div
                 key={f.title}
                 className="flex min-w-[150px] flex-shrink-0 items-center gap-2.5 rounded-xl bg-[#F9FAFF] px-3 py-2.5"
               >
                 <div className="h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#EEF2FF] text-[#23195f] flex text-sm">
-                  <i className={`fa-solid ${f.icon}`}></i>
+                  <FontAwesomeIcon icon={f.icon} />
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-[13px] font-semibold text-[#141432]">{f.title}</div>
