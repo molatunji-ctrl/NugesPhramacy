@@ -134,29 +134,6 @@ function Home({ addToCart, addToWishlist, wishlist = [] }) {
                 <div className="text-xs text-slate-500">8am — 9pm daily</div>
               </div>
             </div>
-          </div>AC verified</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 border-l border-gray-100 px-6">
-              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]">
-                <i className="fa-solid fa-user-doctor"></i>
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-[#141432]">Expert pharmacists</div>
-                <div className="text-xs text-slate-500">Free consultations</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 border-l border-gray-100 px-6">
-              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#EEF2FF] text-[#23195f]">
-                <i className="fa-regular fa-clock"></i>
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-[#141432]">Open 7 days</div>
-                <div className="text-xs text-slate-500">8am — 9pm daily</div>
-              </div>
-            </div>
           </div>
 
           {/* mobile strip */}
@@ -205,12 +182,12 @@ function Home({ addToCart, addToWishlist, wishlist = [] }) {
           <div className="mt-4 sm:mt-6 -mx-4 overflow-x-auto py-6 sm:py-10 px-4 scrollbar-hide">
             <div className="flex gap-3 sm:gap-4 w-max">
               {[
-                { title: "Prescription", count: "1,200+ items", icon: "fa-pill" },
-                { title: "Wellness", count: "480+ items", icon: "fa-heart-circle-plus" },
-                { title: "Mother & Baby", count: "260+ items", icon: "fa-baby" },
-                { title: "Personal Care", count: "390+ items", icon: "fa-sparkles" },
-                { title: "Medical Devices", count: "120+ items", icon: "fa-stethoscope" },
-                { title: "Supplements", count: "540+ items", icon: "fa-shield-halved" },
+                { title: "Prescription", count: "1,200+ items", icon: faPill },
+                { title: "Wellness", count: "480+ items", icon: faHeartCirclePlus },
+                { title: "Mother & Baby", count: "260+ items", icon: faBaby },
+                { title: "Personal Care", count: "390+ items", icon: faSparkles },
+                { title: "Medical Devices", count: "120+ items", icon: faStethoscope },
+                { title: "Supplements", count: "540+ items", icon: faShieldCheck },
               ].map((c) => (
                 <Link
                   key={c.title}
@@ -219,7 +196,7 @@ function Home({ addToCart, addToWishlist, wishlist = [] }) {
                 >
                   <div className="flex items-center gap-2.5 sm:gap-3">
                     <div className="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-lg bg-[#EEF2FF] text-[#23195f]">
-                      <i className={`fa-solid ${c.icon} text-xs sm:text-sm`}></i>
+                      <FontAwesomeIcon icon={c.icon} size="xs" />
                     </div>
                     <div className="min-w-0">
                       <div className="truncate text-sm sm:text-base font-semibold text-[#0B1020] group-hover:text-[#23195f]">
