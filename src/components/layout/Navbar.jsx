@@ -2,6 +2,9 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { clearAuthData } from "../../service/api";
 import { useSearch } from "../../context/SearchContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMagnifyingGlass, faXmark, faUser, faArrowRightFromBracket, faHeart, faBagShopping, faBars } from "@fortawesome/free-solid-svg-icons";
+import { faUser as faUserRegular, faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 
 function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [open, setOpen] = useState(false);
@@ -101,7 +104,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
           <label className="relative block">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-              <i className="fa-solid fa-magnifying-glass"></i>
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
             </span>
 
             <input
@@ -119,7 +122,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                 aria-label="Clear search"
               >
-                <i className="fa-solid fa-xmark"></i>
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             )}
           </label>
@@ -133,7 +136,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                 to="/profile"
                 className="flex items-center gap-2 rounded-full border border-gray-200 bg-white/70 px-3 py-2 text-gray-900 transition hover:bg-white sm:px-5"
               >
-                <i className="fa-regular fa-user text-lg"></i>
+                <FontAwesomeIcon icon={faUserRegular} size="lg" />
                 <span className="hidden sm:inline">Account</span>
               </Link>
 
@@ -143,7 +146,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f7fb] text-gray-900 transition hover:bg-gray-200 sm:h-12 sm:w-12"
                 title="Logout"
               >
-                <i className="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                <FontAwesomeIcon icon={faArrowRightFromBracket} size="lg" />
               </button>
             </>
           ) : (
@@ -151,7 +154,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               to="/signin"
               className="flex items-center gap-2 rounded-full bg-[#23195f] px-4 py-2.5 text-white transition hover:bg-[#1b124d] sm:px-7 sm:py-3"
             >
-              <i className="fa-regular fa-user text-lg"></i>
+              <FontAwesomeIcon icon={faUserRegular} size="lg" />
               <span className="hidden sm:inline">Sign In</span>
             </Link>
           )}
@@ -160,7 +163,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             to="/wishlist"
             className="relative flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f7fb] text-gray-900 transition hover:bg-gray-200 sm:h-12 sm:w-12"
           >
-            <i className="fa-regular fa-heart text-lg"></i>
+            <FontAwesomeIcon icon={faHeartRegular} size="lg" />
 
             {wishlistCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-xs text-white">
@@ -173,7 +176,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             to="/cart"
             className="relative flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f7fb] text-gray-900 transition hover:bg-gray-200 sm:h-12 sm:w-12"
           >
-            <i className="fa-solid fa-bag-shopping text-lg"></i>
+            <FontAwesomeIcon icon={faBagShopping} size="lg" />
 
             {cartCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#23195f] px-1 text-xs text-white">
@@ -187,7 +190,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             onClick={() => setOpen(!open)}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f7fb] lg:hidden sm:h-12 sm:w-12"
           >
-            <i className="fa-solid fa-bars"></i>
+            <FontAwesomeIcon icon={faBars} />
           </button>
         </div>
       </div>
@@ -198,7 +201,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           <div className="mx-auto flex max-w-7xl flex-col items-start px-4 py-4 sm:px-6">
             <label className="relative mb-4 block w-full">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                <i className="fa-solid fa-magnifying-glass"></i>
+                <FontAwesomeIcon icon={faMagnifyingGlass} />
               </span>
 
               <input
@@ -216,7 +219,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                   aria-label="Clear search"
                 >
-                  <i className="fa-solid fa-xmark"></i>
+                  <FontAwesomeIcon icon={faXmark} />
                 </button>
               )}
             </label>

@@ -8,6 +8,9 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, normalizeList, normalizeProduct } from "../service/api";
 import { useSearch } from "../context/SearchContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCartShopping, faSliders, faMagnifyingGlass, faXmark, faChevronUp, faFilter, faBoxOpen, faEnvelope, faCartPlus, faPills, faHeart, faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 
 const CATEGORIES = [
   { id: "prescription", label: "Prescription" },
@@ -93,11 +96,11 @@ function ActiveFilterChip({ active, onClear }) {
   return (
     <div className="mb-5 flex flex-wrap items-center gap-3">
       <span className="inline-flex items-center gap-2 rounded-full bg-[#EEF0FF] px-5 py-2.5 text-base font-semibold text-[#23195f]">
-        <i className="fa-solid fa-filter text-sm"></i>
+        <FontAwesomeIcon icon={faFilter} size="sm" />
         {active.type === "category" ? "Category" : "Condition"}: {active.label}
       </span>
       <button onClick={onClear} className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-5 py-2.5 text-base font-semibold text-rose-600 transition hover:bg-rose-100">
-        <i className="fa-solid fa-xmark"></i>
+        <FontAwesomeIcon icon={faXmark} size="sm" />
         Clear filter
       </button>
     </div>
@@ -110,7 +113,7 @@ function EmptyProductState({ active, error }) {
       <div className="relative">
         <div className="absolute inset-0 -m-6 rounded-full bg-[#EEF0FF] opacity-40"></div>
         <div className="relative inline-flex h-32 w-32 items-center justify-center rounded-[2rem] shadow-sm" style={{ background: `linear-gradient(135deg, ${BRAND_LIGHT}, #FCE7F3)` }}>
-          <i className="fa-solid fa-box-open text-5xl" style={{ color: BRAND_DARK }}></i>
+          <FontAwesomeIcon icon={faBoxOpen} size="5x" style={{ color: BRAND_DARK }} />
         </div>
       </div>
       <h2 className="mt-8 text-3xl font-semibold leading-tight text-[#141432] sm:text-4xl">
@@ -120,7 +123,7 @@ function EmptyProductState({ active, error }) {
         {error || "We're updating our inventory for this department. Check back soon, or request a medication from our team."}
       </p>
       <Link to="/contact" className="mt-8 inline-flex items-center justify-center gap-2 rounded-full border-2 border-orange-200 bg-orange-50 px-8 py-4 text-lg font-semibold text-orange-700 transition hover:bg-orange-100">
-        <i className="fa-solid fa-envelope"></i>
+        <FontAwesomeIcon icon={faEnvelope} size="sm" />
         Request this medication
       </Link>
     </div>
@@ -134,7 +137,7 @@ function ProductCard({ product, addToCart, addToWishlist, isWishlisted }) {
         {product.image ? (
           <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
         ) : (
-          <i className="fa-solid fa-pills text-5xl text-slate-300"></i>
+          <FontAwesomeIcon icon={faPills} size="5x" className="text-slate-300" />
         )}
         <button
           type="button"
@@ -142,7 +145,7 @@ function ProductCard({ product, addToCart, addToWishlist, isWishlisted }) {
           className={`absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition ${isWishlisted ? "text-rose-500" : "text-slate-400 hover:text-rose-500"}`}
           aria-label="Add to wishlist"
         >
-          <i className={`${isWishlisted ? "fa-solid" : "fa-regular"} fa-heart`}></i>
+          <FontAwesomeIcon icon={isWishlisted ? faHeartSolid : faHeartRegular} />
         </button>
       </div>
       <div className="p-5">
@@ -161,7 +164,7 @@ function ProductCard({ product, addToCart, addToWishlist, isWishlisted }) {
           onClick={() => addToCart && addToCart(product)}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#23195f] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <i className="fa-solid fa-cart-plus"></i>
+          <FontAwesomeIcon icon={faCartPlus} size="sm" />
           Add to cart
         </button>
       </div>
@@ -246,13 +249,13 @@ function Shop({ addToCart, addToWishlist, wishlist = [], cartCount = 0 }) {
             </h1>
           </div>
           <Link to="/cart" aria-label="View cart" className="relative inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm transition hover:bg-[#EEF0FF]" style={{ color: BRAND_DARK }}>
-            <i className="fa-solid fa-cart-shopping text-xl"></i>
+            <FontAwesomeIcon icon={faCartShopping} size="xl" />
             {cartCount > 0 && <span className="absolute -right-1 -top-1 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-sm font-semibold text-white" style={{ background: BRAND_DARK }}>{cartCount}</span>}
           </Link>
         </div>
 
         <button onClick={() => setIsMobileOpen((prev) => !prev)} className="mb-4 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-4 text-lg font-semibold shadow-sm lg:hidden" style={{ color: BRAND_DARK }}>
-          <i className="fa-solid fa-sliders"></i>
+          <FontAwesomeIcon icon={faSliders} size="lg" />
           {isMobileOpen ? "Hide filters" : "Show filters"}
         </button>
 
@@ -265,9 +268,9 @@ function Shop({ addToCart, addToWishlist, wishlist = [], cartCount = 0 }) {
                 <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-[#141432]">Find a Medication</h3>
                   <div className="relative mt-4">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"><i className="fa-solid fa-magnifying-glass text-lg"></i></span>
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"><FontAwesomeIcon icon={faMagnifyingGlass} size="lg" /></span>
                     <input id="medication-search" type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search medication…" className="h-14 w-full rounded-full border border-gray-200 bg-slate-50 pl-14 pr-4 text-lg outline-none transition focus:border-[#23195f] focus:bg-white" />
-                    {query && <button onClick={() => setQuery("")} className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600" aria-label="Clear search"><i className="fa-solid fa-xmark"></i></button>}
+                    {query && <button onClick={() => setQuery("")} className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600" aria-label="Clear search"><FontAwesomeIcon icon={faXmark} size="sm" /></button>}
                   </div>
                 </div>
 
@@ -312,11 +315,11 @@ function Shop({ addToCart, addToWishlist, wishlist = [], cartCount = 0 }) {
       </div>
 
       <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Back to top" className={["fixed bottom-20 left-6 z-40 h-14 w-14 rounded-full bg-white shadow-xl border border-gray-200 transition-all duration-300 flex items-center justify-center", hasScrolled ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"].join(" ")} style={{ color: BRAND_DARK }}>
-        <i className="fa-solid fa-chevron-up"></i>
+        <FontAwesomeIcon icon={faChevronUp} size="lg" />
       </button>
 
       <Link to="/cart" className="fixed bottom-20 right-6 z-40 inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-lg font-semibold text-white shadow-xl transition-all hover:opacity-90" style={{ background: BRAND_DARK }}>
-        <i className="fa-solid fa-cart-shopping"></i>
+        <FontAwesomeIcon icon={faCartShopping} size="lg" />
         View Cart{cartCount > 0 ? ` (${cartCount})` : ""}
       </Link>
       <div className="h-24"></div>

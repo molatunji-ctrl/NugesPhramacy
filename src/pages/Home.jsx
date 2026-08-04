@@ -4,8 +4,9 @@ import heroImg from "../assets/Images/img3.jpg";
 import Contact from "./Contact";
 import About from "./About";
 import Service from "./Service";
+import { FeaturedProducts } from "../components/shop/FeaturedProducts";
 
-function Home() {
+function Home({ addToCart, addToWishlist, wishlist = [] }) {
   const location = useLocation();
 
   useEffect(() => {
@@ -52,7 +53,7 @@ function Home() {
               {/* CTA buttons — stacked full-width on mobile */}
               <div className="mt-7 sm:mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-center justify-center">
                 <Link
-                  to="/Shop"
+                  to="/shop"
                   className="inline-flex items-center justify-center rounded-full bg-[#23195f] px-6 py-3.5 sm:py-3 text-sm font-semibold text-white shadow-lg shadow-[#23195f]/20 transition hover:bg-[#141444]"
                 >
                   Shop Medicines
@@ -170,7 +171,7 @@ function Home() {
               </h2>
             </div>
             
-            <Link to="/Shop" className="flex-shrink-0 text-sm font-medium text-[#23195f] whitespace-nowrap">
+            <Link to="/shop" className="flex-shrink-0 text-sm font-medium text-[#23195f] whitespace-nowrap">
               View all →
             </Link>
           </div>
@@ -187,7 +188,7 @@ function Home() {
               ].map((c) => (
                 <Link
                   key={c.title}
-                  to="/Shop"
+                  to="/shop"
                   className="group block min-w-[160px] sm:min-w-[200px] flex-shrink-0 rounded-xl border border-gray-100 bg-white p-3.5 sm:p-4 hover:shadow-sm transition"
                 >
                   <div className="flex items-center gap-2.5 sm:gap-3">
@@ -208,9 +209,12 @@ function Home() {
             </div>
           </div>
         </div>
-      </section>
+</section>
 
-      {/* ── Contact / About / Service ──────────────
+      {/* ── Featured Products ────────────────────────── */}
+      <FeaturedProducts addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} />
+
+      {/* ── Contact / About / Service ────────────__
           These components already render their own
           <section id="..."> with background + padding,
           so they're placed directly — no wrapping
