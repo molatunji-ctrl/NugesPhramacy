@@ -5,8 +5,9 @@
 */
 
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api, normalizeList, normalizeProduct } from "../service/api";
+import { useSearch } from "../context/SearchContext";
 
 const CATEGORIES = [
   { id: "prescription", label: "Prescription" },
@@ -174,9 +175,22 @@ function Shop({ addToCart, addToWishlist, wishlist = [], cartCount = 0 }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasScrolled, setHasScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
   const [loadError, setLoadError] = useState("");
+  const { query, setQuery } = useSearch();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const urlQuery = searchParams.get("search") || "";
+    setQuery(urlQuery);
+  }, [searchParams, setQuery]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchParams({ search: query }, { replace: true });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, setSearchParams]);
 
   useEffect(() => {
     let mounted = true;
@@ -201,9 +215,9 @@ function Shop({ addToCart, addToWishlist, wishlist = [], cartCount = 0 }) {
   }, []);
 
   const visibleProducts = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
     const filtered = products.filter((product) => {
-      const matchesQuery = !query || [product.name, product.brand, product.type, product.category, product.condition].join(" ").toLowerCase().includes(query);
+      const matchesQuery = !q || [product.name, product.brand, product.type, product.category, product.condition].join(" ").toLowerCase().includes(q);
       const value = activeFilter?.type === "category" ? product.category || product.type : product.condition;
       const matchesFilter = !activeFilter || String(value || "").toLowerCase().includes(activeFilter.id.replace(/-/g, " ")) || String(value || "").toLowerCase().includes(activeFilter.label.toLowerCase());
       return matchesQuery && matchesFilter;
@@ -211,7 +225,7 @@ function Shop({ addToCart, addToWishlist, wishlist = [], cartCount = 0 }) {
     if (sortId === "price_low") filtered.sort((a, b) => a.price - b.price);
     if (sortId === "price_high") filtered.sort((a, b) => b.price - a.price);
     return filtered;
-  }, [products, searchQuery, activeFilter, sortId]);
+  }, [products, query, activeFilter, sortId]);
 
   function handleSelectFilter(type, item) {
     const isSame = activeFilter?.id === item.id && activeFilter?.type === type;
@@ -252,8 +266,8 @@ function Shop({ addToCart, addToWishlist, wishlist = [], cartCount = 0 }) {
                   <h3 className="text-lg font-semibold text-[#141432]">Find a Medication</h3>
                   <div className="relative mt-4">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"><i className="fa-solid fa-magnifying-glass text-lg"></i></span>
-                    <input id="medication-search" type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search medication…" className="h-14 w-full rounded-full border border-gray-200 bg-slate-50 pl-14 pr-4 text-lg outline-none transition focus:border-[#23195f] focus:bg-white" />
-                    {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600" aria-label="Clear search"><i className="fa-solid fa-xmark"></i></button>}
+                    <input id="medication-search" type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search medication…" className="h-14 w-full rounded-full border border-gray-200 bg-slate-50 pl-14 pr-4 text-lg outline-none transition focus:border-[#23195f] focus:bg-white" />
+                    {query && <button onClick={() => setQuery("")} className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600" aria-label="Clear search"><i className="fa-solid fa-xmark"></i></button>}
                   </div>
                 </div>
 

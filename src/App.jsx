@@ -12,6 +12,7 @@ import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import { api, normalizeList } from "./service/api";
+import { SearchProvider } from "./context/SearchContext";
 
 // ── Helpers ────────────────────────────────────────
 function loadLocalArray(key) {
@@ -218,7 +219,9 @@ function AppLayout() {
 function App() {
   return (
     <BrowserRouter>
-      <AppLayout />
+      <SearchProvider>
+        <AppLayout />
+      </SearchProvider>
     </BrowserRouter>
   );
 }
