@@ -9,7 +9,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api, normalizeList, normalizeProduct } from "../service/api";
 import { useSearch } from "../context/SearchContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCartShopping, faSliders, faMagnifyingGlass, faXmark, faChevronUp, faFilter, faBoxOpen, faEnvelope, faCartPlus, faPills, faHeart, faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
+import { faCartShopping, faSliders, faMagnifyingGlass, faXmark, faChevronUp, faFilter, faBoxOpen, faEnvelope, faCartPlus, faPills, faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 
 const CATEGORIES = [

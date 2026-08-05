@@ -50,7 +50,6 @@ import {
   faBuildingColumns,
   faMobileScreen,
   faArrowLeft,
-  faRegularHeart,
 } from "@fortawesome/free-solid-svg-icons";
 
 // Regular icons

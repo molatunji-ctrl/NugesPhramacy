@@ -12,7 +12,7 @@ import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import { api, normalizeList } from "./service/api";
-import { SearchProvider } from "./context/SearchContext";
+import { SearchProvider } from "./context/SearchProvider";
 
 // ── Helpers ────────────────────────────────────────
 function loadLocalArray(key) {

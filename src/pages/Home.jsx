@@ -6,7 +6,7 @@ import About from "./About";
 import Service from "./Service";
 import { FeaturedProducts } from "../components/shop/FeaturedProducts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTruck, faShieldHalved, faUserDoctor, faPill, faHeartCirclePlus, faBaby, faSparkles, faStethoscope, faShieldCheck } from "@fortawesome/free-solid-svg-icons";
+import { faTruck, faShieldHalved, faUserDoctor, faPills, faHeartPulse, faBaby, faMagic, faStethoscope, faShieldHeart } from "@fortawesome/free-solid-svg-icons";
 import { faClock } from "@fortawesome/free-regular-svg-icons";
 
 function Home({ addToCart, addToWishlist, wishlist = [] }) {
@@ -182,12 +182,12 @@ function Home({ addToCart, addToWishlist, wishlist = [] }) {
           <div className="mt-4 sm:mt-6 -mx-4 overflow-x-auto py-6 sm:py-10 px-4 scrollbar-hide">
             <div className="flex gap-3 sm:gap-4 w-max">
               {[
-                { title: "Prescription", count: "1,200+ items", icon: faPill },
-                { title: "Wellness", count: "480+ items", icon: faHeartCirclePlus },
+                { title: "Prescription", count: "1,200+ items", icon: faPills },
+                { title: "Wellness", count: "480+ items", icon: faHeartPulse },
                 { title: "Mother & Baby", count: "260+ items", icon: faBaby },
-                { title: "Personal Care", count: "390+ items", icon: faSparkles },
+                { title: "Personal Care", count: "390+ items", icon: faMagic },
                 { title: "Medical Devices", count: "120+ items", icon: faStethoscope },
-                { title: "Supplements", count: "540+ items", icon: faShieldCheck },
+                { title: "Supplements", count: "540+ items", icon: faShieldHeart },
               ].map((c) => (
                 <Link
                   key={c.title}

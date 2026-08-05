@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { clearAuthData } from "../../service/api";
 import { useSearch } from "../../context/SearchContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faXmark, faUser, faArrowRightFromBracket, faHeart, faBagShopping, faBars } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faXmark, faArrowRightFromBracket, faBagShopping, faBars } from "@fortawesome/free-solid-svg-icons";
 import { faUser as faUserRegular, faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 
 function Navbar({ cartCount = 0, wishlistCount = 0 }) {
@@ -38,7 +38,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
       clearAuthData();
       setIsLoggedIn(false);
       navigate("/signin");
-    } catch (error) {
+    } catch {
       clearAuthData();
       setIsLoggedIn(false);
       navigate("/signin");

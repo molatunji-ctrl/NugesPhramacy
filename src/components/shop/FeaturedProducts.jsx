@@ -6,10 +6,6 @@ import { useProducts } from "./useProducts";
 import { ProductCard } from "./ProductCard";
 import { useSearch } from "../../context/SearchContext";
 
-function formatPrice(n) {
-  return "₦" + Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 function EmptyProductState() {
   return (
     <div className="flex min-h-[300px] flex-col items-center justify-center text-center px-4">
@@ -30,7 +26,7 @@ function EmptyProductState() {
 }
 
 export function FeaturedProducts({ addToCart, addToWishlist, wishlist = [] }) {
-  const { products, isLoading, error } = useProducts();
+  const { products, isLoading } = useProducts();
   const { search } = useSearch();
   const [localQuery, setLocalQuery] = useState("");
 
