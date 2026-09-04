@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { api, clearAuthData } from "../service/api";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../service/api";
 
 function AccountShell({ children }) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleSignOut = async () => {
-    try { await api.logout(); } catch (err) { console.error(err); }
-    clearAuthData();
-    navigate("/login", { replace: true });
+    try {
+      await logout();
+    } finally {
+      navigate("/login", { replace: true });
+    }
   };
 
   const navLinkClass = ({ isActive }) =>
@@ -45,7 +49,8 @@ function AccountShell({ children }) {
 }
 
 function Profile() {
-  const [email, setEmail] = useState(() => localStorage.getItem("userEmail") || "");
+  const { user, refreshUser } = useAuth();
+  const [email, setEmail] = useState(() => user?.email || "");
   const [form, setForm] = useState({ fullName: "", phone: "", address: "", city: "", state: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -57,14 +62,14 @@ function Profile() {
     api.getProfile()
       .then((profile) => {
         if (!mounted) return;
-        const user = profile.user || profile.data || profile;
-        setEmail(user.email || localStorage.getItem("userEmail") || "");
+        const profileUser = profile.user || profile.data || profile;
+        setEmail(profileUser.email || user?.email || "");
         setForm({
-          fullName: user.fullName || user.fullname || user.name || "",
-          phone: user.phone || user.phoneNumber || "",
-          address: user.address || user.deliveryAddress || "",
-          city: user.city || "",
-          state: user.state || "",
+          fullName: profileUser.fullName || profileUser.fullname || profileUser.name || "",
+          phone: profileUser.phone || profileUser.phoneNumber || "",
+          address: profileUser.address || profileUser.deliveryAddress || "",
+          city: profileUser.city || "",
+          state: profileUser.state || "",
         });
         setError("");
       })
@@ -74,7 +79,7 @@ function Profile() {
       })
       .finally(() => mounted && setLoading(false));
     return () => { mounted = false; };
-  }, []);
+  }, [user?.email]);
 
   const handleChange = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -85,7 +90,7 @@ function Profile() {
     setError("");
     try {
       await api.updateProfile({ ...form, email, fullname: form.fullName });
-      localStorage.setItem("userName", form.fullName);
+      await refreshUser();
       setSaved(true);
     } catch (err) {
       setError(err.message || "Unable to save profile.");
