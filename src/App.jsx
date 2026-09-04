@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import { api, normalizeList } from "./service/api";
 import { SearchProvider } from "./context/SearchProvider";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // ── Helpers ────────────────────────────────────────
 function loadLocalArray(key) {
@@ -34,18 +35,27 @@ function loadLocalObject(key) {
 
 // ── Route Protection ───────────────────────────────
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true" || !!token;
-  
-  if (!isAuthenticated) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center text-[#23195f]">
+        Checking your session…
+      </div>
+    );
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
+
   return children;
 };
 
 // ── Main Layout ────────────────────────────────────
 function AppLayout() {
   const location = useLocation();
+  const { user } = useAuth();
   
   const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders", "/checkout"];
   const hideNavbar = ACCOUNT_PAGE_PATHS.includes(location.pathname.toLowerCase());
@@ -56,50 +66,47 @@ function AppLayout() {
   const [promoDiscount, setPromoDiscount] = useState(() => loadLocalObject("promoDiscount"));
   const hydrated = useRef(false);
 
-  // 👉 CAPTURE GOOGLE OAUTH TOKEN FROM URL QUERY PARAMS ON LOAD
-  useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const token = queryParams.get("token");
-
-    if (token) {
-      localStorage.setItem("token", token);
-      localStorage.setItem("isAuthenticated", "true");
-      // Clean up the URL query parameters so it looks neat
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
-
   useEffect(() => {
     let mounted = true;
-    const isAuthenticated = localStorage.getItem("isAuthenticated") === "true" || !!localStorage.getItem("token");
-    if (!isAuthenticated) {
+
+    if (!user) {
       hydrated.current = true;
-      return;
+      return undefined;
     }
 
-    Promise.allSettled([api.getCart(), api.getWishlist()]).then(([cartResult, wishlistResult]) => {
-      if (!mounted) return;
-      if (cartResult.status === "fulfilled") setCart(normalizeList(cartResult.value));
-      if (wishlistResult.status === "fulfilled") setWishlist(normalizeList(wishlistResult.value));
-      hydrated.current = true;
-    });
+    hydrated.current = false;
 
-    return () => { mounted = false; };
-  }, []);
+    Promise.allSettled([api.getCart(), api.getWishlist()]).then(
+      ([cartResult, wishlistResult]) => {
+        if (!mounted) return;
+        if (cartResult.status === "fulfilled") {
+          setCart(normalizeList(cartResult.value));
+        }
+        if (wishlistResult.status === "fulfilled") {
+          setWishlist(normalizeList(wishlistResult.value));
+        }
+        hydrated.current = true;
+      }
+    );
+
+    return () => {
+      mounted = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
-    if (hydrated.current && (localStorage.getItem("isAuthenticated") === "true" || localStorage.getItem("token"))) {
+    if (hydrated.current && user) {
       api.saveCart(cart).catch(() => {});
     }
-  }, [cart]);
+  }, [cart, user]);
 
   useEffect(() => {
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
-    if (hydrated.current && (localStorage.getItem("isAuthenticated") === "true" || localStorage.getItem("token"))) {
+    if (hydrated.current && user) {
       api.saveWishlist(wishlist).catch(() => {});
     }
-  }, [wishlist]);
+  }, [wishlist, user]);
 
   const addToCart = (product) => {
     setCart((prev) => {
@@ -219,9 +226,11 @@ function AppLayout() {
 function App() {
   return (
     <BrowserRouter>
-      <SearchProvider>
-        <AppLayout />
-      </SearchProvider>
+      <AuthProvider>
+        <SearchProvider>
+          <AppLayout />
+        </SearchProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
