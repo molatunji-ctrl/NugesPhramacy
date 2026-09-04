@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import googleIcon from "../assets/Icons/google.ico";
-import { API_BASE, api, saveAuthData } from "../service/api";
+import { useAuth } from "../context/AuthContext";
 
 function LogIn() {
   const navigate = useNavigate();
+  const { login, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,12 +36,10 @@ function LogIn() {
     try {
       const cleanEmail = email.toLowerCase().trim();
 
-      const data = await api.login({
+      const data = await login({
         email: cleanEmail,
         password,
       });
-
-      saveAuthData(data, cleanEmail);
 
       setMessageType("success");
       setMessage(data.message || "Login successful");
@@ -55,7 +54,7 @@ function LogIn() {
   };
 
   const handleGoogle = () => {
-    window.location.href = `${API_BASE}/oauth2/authorization/google`;
+    loginWithGoogle();
   };
 
   return (
