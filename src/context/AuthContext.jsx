@@ -59,7 +59,9 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     LEGACY_AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
-    refreshUser();
+    const restoreSession = window.setTimeout(refreshUser, 0);
+
+    return () => window.clearTimeout(restoreSession);
   }, [refreshUser]);
 
   useEffect(() => {
