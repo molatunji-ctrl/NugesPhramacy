@@ -139,17 +139,28 @@ export const PROMO_CODES = {
 };
 
 export const api = {
-  login: (payload) =>
-    apiRequest("/auth/login", {
-      method: "POST",
-      data: payload,
-    }),
+  login: async (payload) => {
+    try {
+      return await apiRequest("/auth/login", {
+        method: "POST",
+        data: payload,
+      });
+    } finally {
+      // Spring Security rotates the CSRF token after authentication.
+      resetCsrfToken();
+    }
+  },
 
-  register: (payload) =>
-    apiRequest("/auth/register", {
-      method: "POST",
-      data: payload,
-    }),
+  register: async (payload) => {
+    try {
+      return await apiRequest("/auth/register", {
+        method: "POST",
+        data: payload,
+      });
+    } finally {
+      resetCsrfToken();
+    }
+  },
 
   getCurrentUser: () => apiRequest("/auth/me"),
 
