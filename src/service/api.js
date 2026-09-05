@@ -4,26 +4,83 @@ export const API_BASE = (
   import.meta.env.VITE_API_URL || "https://np-backend-qnrv.onrender.com"
 ).replace(/\/$/, "");
 
-const axiosClient = axios.create({
-  baseURL: `${API_BASE}/api`,
+const API_URL = `${API_BASE}/api`;
+const UNSAFE_METHODS = new Set(["post", "put", "patch", "delete"]);
+
+const csrfClient = axios.create({
+  baseURL: API_URL,
   withCredentials: true,
   headers: {
+    Accept: "application/json",
+  },
+});
+
+const axiosClient = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+  headers: {
+    Accept: "application/json",
     "Content-Type": "application/json",
   },
 });
 
-axiosClient.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken") ||
-    localStorage.getItem("accessToken");
+let csrfToken = null;
+let csrfTokenPromise = null;
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+function resetCsrfToken() {
+  csrfToken = null;
+  csrfTokenPromise = null;
+}
+
+async function getCsrfToken() {
+  if (csrfToken) return csrfToken;
+
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = csrfClient
+      .get("/csrf")
+      .then(({ data }) => {
+        const token = data?.token;
+
+        if (!token) {
+          throw new Error("The server did not return a CSRF token.");
+        }
+
+        csrfToken = token;
+        return token;
+      })
+      .finally(() => {
+        csrfTokenPromise = null;
+      });
+  }
+
+  return csrfTokenPromise;
+}
+
+axiosClient.interceptors.request.use(async (config) => {
+  const method = (config.method || "get").toLowerCase();
+
+  if (UNSAFE_METHODS.has(method)) {
+    config.headers = config.headers || {};
+    config.headers["X-XSRF-TOKEN"] = await getCsrfToken();
   }
 
   return config;
 });
+
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      window.dispatchEvent(new Event("auth:unauthorized"));
+    }
+
+    if (error.response?.status === 403) {
+      resetCsrfToken();
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 function getApiError(error) {
   const message =
@@ -38,61 +95,6 @@ function getApiError(error) {
   normalizedError.data = error.response?.data;
 
   throw normalizedError;
-}
-
-export function saveAuthData(data = {}, fallbackEmail = "", fallbackName = "") {
-  const token =
-    data.token ||
-    data.accessToken ||
-    data.jwt ||
-    data?.data?.token ||
-    data?.data?.accessToken;
-
-  const user = data.user || data?.data?.user || data?.data || data;
-
-  const email = (user?.email || fallbackEmail || "").toLowerCase().trim();
-
-  const name =
-    user?.fullname ||
-    user?.fullName ||
-    user?.name ||
-    fallbackName ||
-    "User";
-
-  if (token) {
-    localStorage.setItem("token", token);
-  }
-
-  localStorage.setItem("isAuthenticated", "true");
-  localStorage.setItem("userEmail", email);
-  localStorage.setItem("userName", name);
-
-  localStorage.setItem(
-    "user",
-    JSON.stringify({
-      ...user,
-      email,
-      name,
-    })
-  );
-
-  window.dispatchEvent(new Event("authChange"));
-}
-
-export function clearAuthData() {
-  [
-    "token",
-    "authToken",
-    "accessToken",
-    "isAuthenticated",
-    "userEmail",
-    "userName",
-    "user",
-  ].forEach((key) => {
-    localStorage.removeItem(key);
-  });
-
-  window.dispatchEvent(new Event("authChange"));
 }
 
 export async function apiRequest(path, options = {}) {
@@ -129,7 +131,7 @@ export async function tryApi(paths, options = {}) {
   throw lastError;
 }
 
-// ── Promo codes (client-side fallback if backend route isn't live yet) ──
+// Client-side fallback while the matching backend promotion route is being added.
 export const PROMO_CODES = {
   SAVE10: { type: "percent", value: 10, label: "10% off your order" },
   SAVE20: { type: "percent", value: 20, label: "20% off your order" },
@@ -137,22 +139,40 @@ export const PROMO_CODES = {
 };
 
 export const api = {
-  login: (payload) =>
-    apiRequest("/auth/login", {
-      method: "POST",
-      data: payload,
-    }),
+  login: async (payload) => {
+    try {
+      return await apiRequest("/auth/login", {
+        method: "POST",
+        data: payload,
+      });
+    } finally {
+      // Spring Security rotates the CSRF token after authentication.
+      resetCsrfToken();
+    }
+  },
 
-  register: (payload) =>
-    apiRequest("/auth/register", {
-      method: "POST",
-      data: payload,
-    }),
+  register: async (payload) => {
+    try {
+      return await apiRequest("/auth/register", {
+        method: "POST",
+        data: payload,
+      });
+    } finally {
+      resetCsrfToken();
+    }
+  },
 
-  logout: () =>
-    tryApi(["/auth/logout", "/logout"], {
-      method: "POST",
-    }),
+  getCurrentUser: () => apiRequest("/auth/me"),
+
+  logout: async () => {
+    try {
+      return await tryApi(["/auth/logout", "/logout"], {
+        method: "POST",
+      });
+    } finally {
+      resetCsrfToken();
+    }
+  },
 
   getProducts: () => tryApi(["/products", "/product", "/medicines", "/items"]),
 
@@ -197,10 +217,10 @@ export const api = {
       data: order,
     }),
 
-  applyPromoCode: (code) =>
+  applyPromoCode: (code, orderAmount) =>
     tryApi(["/promo/validate", "/promotions/validate", "/coupons/apply"], {
       method: "POST",
-      data: { code },
+      data: { code, orderAmount },
     }),
 
   sendContactMessage: (payload) =>

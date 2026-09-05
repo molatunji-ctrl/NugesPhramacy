@@ -2,60 +2,62 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import googleIcon from "../assets/Icons/google.ico";
-import { API_BASE, api, saveAuthData } from "../service/api";
+import { useAuth } from "../context/AuthContext";
 
-function LogIn() {
+function SignIn() {
   const navigate = useNavigate();
+  const { register, loginWithGoogle } = useAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
+  const [form, setForm] = useState({
+    fullname: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-
   const [loading, setLoading] = useState(false);
-  const [navigating, setNavigating] = useState(false);
 
-  const goToSignIn = (e) => {
-    e.preventDefault();
-    setNavigating(true);
-
-    setTimeout(() => {
-      navigate("/signin");
-    }, 500);
+  const updateField = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    setLoading(true);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setMessage("");
     setMessageType("");
 
-    try {
-      const cleanEmail = email.toLowerCase().trim();
+    if (form.password.length < 8) {
+      setMessageType("error");
+      setMessage("Use at least 8 characters for your password.");
+      return;
+    }
 
-      const data = await api.login({
-        email: cleanEmail,
-        password,
+    if (form.password !== form.confirmPassword) {
+      setMessageType("error");
+      setMessage("The passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await register({
+        fullname: form.fullname.trim(),
+        email: form.email.toLowerCase().trim(),
+        password: form.password,
       });
 
-      saveAuthData(data, cleanEmail);
-
       setMessageType("success");
-      setMessage(data.message || "Login successful");
-
-      navigate("/home", { replace: true });
+      setMessage(response?.message || "Account created. You can now sign in.");
+      setTimeout(() => navigate("/login", { replace: true }), 800);
     } catch (error) {
       setMessageType("error");
-      setMessage(error.message || "Login failed");
+      setMessage(error.message || "Account creation failed.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogle = () => {
-    window.location.href = `${API_BASE}/oauth2/authorization/google`;
   };
 
   return (
@@ -65,7 +67,6 @@ function LogIn() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1B1967] text-lg font-semibold text-white">
             N
           </div>
-
           <h3 className="text-2xl font-semibold text-[#1B1967]">
             Nuges Pharmaceuticals
           </h3>
@@ -74,20 +75,19 @@ function LogIn() {
         <main className="flex w-full flex-col gap-6 rounded-xl border border-gray-200 bg-white px-8 py-8 shadow-sm transition-shadow duration-300 hover:shadow-md">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-[#090F27]">
-              Welcome back
+              Create your account
             </h1>
-
-            <h3 className="text-sm text-[#6A7282]">
-              Sign in to track orders and manage your profile.
-            </h3>
+            <p className="text-sm text-[#6A7282]">
+              Save your details, track orders, and checkout faster.
+            </p>
           </div>
 
           <button
             type="button"
-            onClick={handleGoogle}
+            onClick={loginWithGoogle}
             className="flex items-center justify-center rounded-xl border border-gray-300 py-2.5 font-semibold text-[#100F27] transition-all duration-200 hover:border-[#1B1967] hover:bg-[#F4F5FA] active:scale-[0.98]"
           >
-            <img src={googleIcon} alt="Google" className="mr-2 h-5 w-5" />
+            <img src={googleIcon} alt="" className="mr-2 h-5 w-5" />
             Continue with Google
           </button>
 
@@ -95,31 +95,47 @@ function LogIn() {
 
           <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
             <input
+              name="fullname"
+              type="text"
+              placeholder="Full name"
+              value={form.fullname}
+              onChange={updateField}
+              autoComplete="name"
+              className="rounded-xl border border-gray-300 px-3 py-2.5 outline-none transition-all duration-200 focus:border-[#1B1967] focus:ring-2 focus:ring-[#1B1967]/15"
+              required
+            />
+            <input
+              name="email"
               type="email"
               placeholder="Email"
-              className="rounded-xl border border-gray-300 px-3 py-2.5 outline-none transition-all duration-200 focus:border-[#1B1967] focus:ring-2 focus:ring-[#1B1967]/15"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={form.email}
+              onChange={updateField}
               autoComplete="email"
-              required
-            />
-
-            <input
-              type="password"
-              placeholder="Password"
               className="rounded-xl border border-gray-300 px-3 py-2.5 outline-none transition-all duration-200 focus:border-[#1B1967] focus:ring-2 focus:ring-[#1B1967]/15"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
               required
             />
-
-            <a
-              href="#"
-              className="text-[13px] font-semibold text-[#1B1967] transition-opacity duration-200 hover:opacity-70"
-            >
-              Forgot password?
-            </a>
+            <input
+              name="password"
+              type="password"
+              placeholder="Password (8+ characters)"
+              value={form.password}
+              onChange={updateField}
+              autoComplete="new-password"
+              minLength={8}
+              className="rounded-xl border border-gray-300 px-3 py-2.5 outline-none transition-all duration-200 focus:border-[#1B1967] focus:ring-2 focus:ring-[#1B1967]/15"
+              required
+            />
+            <input
+              name="confirmPassword"
+              type="password"
+              placeholder="Confirm password"
+              value={form.confirmPassword}
+              onChange={updateField}
+              autoComplete="new-password"
+              minLength={8}
+              className="rounded-xl border border-gray-300 px-3 py-2.5 outline-none transition-all duration-200 focus:border-[#1B1967] focus:ring-2 focus:ring-[#1B1967]/15"
+              required
+            />
 
             <button
               type="submit"
@@ -129,10 +145,10 @@ function LogIn() {
               {loading ? (
                 <>
                   <i className="fa-solid fa-spinner animate-spin"></i>
-                  Signing in…
+                  Creating account…
                 </>
               ) : (
-                "Sign in"
+                "Create account"
               )}
             </button>
           </form>
@@ -140,7 +156,7 @@ function LogIn() {
           {message && (
             <p
               role="alert"
-              className={`text-center rounded-lg px-3 py-2 text-sm ${
+              className={`rounded-lg px-3 py-2 text-center text-sm ${
                 messageType === "success"
                   ? "border border-green-100 bg-green-50 text-green-700"
                   : "border border-red-100 bg-red-50 text-red-700"
@@ -150,48 +166,27 @@ function LogIn() {
             </p>
           )}
 
-          <div className="flex items-center justify-center gap-1">
-            <h2 className="text-[14px] font-medium text-[#5B6379]">
-              New to Nuges?
-            </h2>
-
-            <a
-              href="/signin"
-              onClick={goToSignIn}
-              className="inline-flex items-center gap-1.5 text-[16px] font-semibold text-[#1B1967] transition-opacity duration-200 hover:opacity-70"
+          <p className="text-center text-sm text-[#5B6379]">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="font-semibold text-[#1B1967] transition-opacity hover:opacity-70"
             >
-              {navigating && (
-                <i className="fa-solid fa-spinner animate-spin text-sm"></i>
-              )}
-              Create account
-            </a>
-          </div>
+              Sign in
+            </Link>
+          </p>
         </main>
 
-        <div className="mt-4 flex items-center justify-center">
-          <Link
-            to="/home"
-            className="text-sm text-[#6A7282] transition-colors duration-200 hover:text-[#1B1967]"
-          >
-            <i className="fa-solid fa-arrow-left-long mr-1.5"></i>
-            Back to Home
-          </Link>
-        </div>
+        <Link
+          to="/home"
+          className="mt-4 text-sm text-[#6A7282] transition-colors duration-200 hover:text-[#1B1967]"
+        >
+          <i className="fa-solid fa-arrow-left-long mr-1.5"></i>
+          Back to Home
+        </Link>
       </div>
-
-      {navigating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F9FCFF]/80 backdrop-blur-sm animate-fade-in-up">
-          <div className="flex flex-col items-center gap-3">
-            <i className="fa-solid fa-spinner animate-spin text-3xl text-[#1B1967]"></i>
-
-            <p className="text-sm font-medium text-[#1B1967]">
-              Taking you to create an account…
-            </p>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
 
-export default LogIn;
+export default SignIn;

@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { clearAuthData } from "../../service/api";
+import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { useSearch } from "../../context/SearchContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faXmark, faArrowRightFromBracket, faBagShopping, faBars } from "@fortawesome/free-solid-svg-icons";
@@ -8,40 +8,17 @@ import { faUser as faUserRegular, faHeart as faHeartRegular } from "@fortawesome
 
 function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const [open, setOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { query, setQuery, search, clearSearch } = useSearch();
+  const { user, logout } = useAuth();
+  const isLoggedIn = Boolean(user);
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkLogin = () => {
-      const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user");
-      const isAuthenticated = localStorage.getItem("isAuthenticated");
-
-      setIsLoggedIn(!!token || !!user || isAuthenticated === "true");
-    };
-
-    checkLogin();
-
-    window.addEventListener("authChange", checkLogin);
-    window.addEventListener("storage", checkLogin);
-
-    return () => {
-      window.removeEventListener("authChange", checkLogin);
-      window.removeEventListener("storage", checkLogin);
-    };
-  }, []);
-
   const handleLogout = async () => {
     try {
-      clearAuthData();
-      setIsLoggedIn(false);
-      navigate("/signin");
-    } catch {
-      clearAuthData();
-      setIsLoggedIn(false);
-      navigate("/signin");
+      await logout();
+    } finally {
+      navigate("/login");
     }
   };
 
@@ -151,7 +128,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             </>
           ) : (
             <Link
-              to="/signin"
+              to="/login"
               className="flex items-center gap-2 rounded-full bg-[#23195f] px-4 py-2.5 text-white transition hover:bg-[#1b124d] sm:px-7 sm:py-3"
             >
               <FontAwesomeIcon icon={faUserRegular} size="lg" />
@@ -289,7 +266,7 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               </>
             ) : (
               <Link
-                to="/signin"
+                to="/login"
                 className="w-full text-gray-700 hover:text-[#23195f]"
                 onClick={() => setOpen(false)}
               >
