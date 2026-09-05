@@ -158,15 +158,22 @@ function ProductCard({ product, addToCart, addToWishlist, isWishlisted }) {
             {product.inStock ? "In stock" : "Out of stock"}
           </span>
         </div>
-        <button
-          type="button"
-          disabled={!product.inStock}
-          onClick={() => addToCart && addToCart(product)}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#23195f] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <FontAwesomeIcon icon={faCartPlus} size="sm" />
-          Add to cart
-        </button>
+        {product.prescriptionRequired ? (
+          <Link to="/contact" className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[#23195f] px-5 py-3 text-sm font-semibold text-[#23195f]">
+            <FontAwesomeIcon icon={faEnvelope} size="sm" />
+            Prescription approval required
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled={!product.inStock}
+            onClick={() => addToCart && addToCart(product)}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#23195f] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <FontAwesomeIcon icon={faCartPlus} size="sm" />
+            Add to cart
+          </button>
+        )}
       </div>
     </article>
   );
