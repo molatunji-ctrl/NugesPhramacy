@@ -213,6 +213,28 @@ export const api = {
   getOrders: () =>
     tryApi(["/orders", "/order", "/user/orders", "/orders/me"]),
 
+  getPrescriptions: () =>
+    apiRequest("/prescriptions", { params: { size: 50 } }),
+
+  uploadPrescription: async (productId, quantity, file) => {
+    const formData = new FormData();
+    formData.append("productId", String(productId));
+    formData.append("quantity", String(quantity));
+    formData.append("file", file);
+
+    try {
+      const response = await axiosClient.post("/prescriptions", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    } catch (error) {
+      return getApiError(error);
+    }
+  },
+
+  prescriptionFileUrl: (prescriptionId) =>
+    `${API_BASE}/api/prescriptions/${prescriptionId}/file`,
+
   createOrder: (order) =>
     apiRequest("/orders", {
       method: "POST",
@@ -308,6 +330,9 @@ export function normalizeCart(data) {
     price: Number(item.productPrice ?? item.price ?? item.product?.price ?? 0),
     qty: Number(item.quantity ?? item.qty ?? 1),
     inStock: item.inStock ?? true,
+    prescriptionRequired: Boolean(item.prescriptionRequired),
+    approvedPrescriptionQuantity: Number(item.approvedPrescriptionQuantity || 0),
+    prescriptionReady: item.prescriptionReady !== false,
     brand: item.brand ?? item.product?.brand ?? "NUGES",
     type: item.type ?? item.product?.category ?? "PHARMACY",
   }));

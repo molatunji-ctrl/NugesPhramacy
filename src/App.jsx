@@ -12,6 +12,7 @@ import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import PaymentCallback from "./pages/PaymentCallback";
+import Prescriptions from "./pages/Prescriptions";
 import { api, normalizeCart, normalizeWishlist } from "./service/api";
 import { SearchProvider } from "./context/SearchProvider";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -58,7 +59,7 @@ function AppLayout() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   
-  const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders", "/checkout", "/payment/callback"];
+  const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders", "/prescriptions", "/checkout", "/payment/callback"];
   const hideNavbar = ACCOUNT_PAGE_PATHS.includes(location.pathname.toLowerCase());
   const hideFooter = hideNavbar;
 
@@ -126,6 +127,24 @@ function AppLayout() {
   }, [user, authLoading]);
 
   useEffect(() => {
+    let mounted = true;
+    const path = location.pathname.toLowerCase();
+    if (authLoading || !user || !["/cart", "/checkout"].includes(path)) {
+      return undefined;
+    }
+
+    api.getCart()
+      .then((response) => {
+        if (mounted) setCart(normalizeCart(response));
+      })
+      .catch((error) => {
+        if (mounted) setShoppingError(error.message || "Unable to refresh your cart.");
+      });
+
+    return () => { mounted = false; };
+  }, [location.pathname, user, authLoading]);
+
+  useEffect(() => {
     if (!authLoading && !user) {
       localStorage.setItem("guestCart", JSON.stringify(cart));
     }
@@ -161,6 +180,9 @@ function AppLayout() {
             price: Number(product.price || 0),
             qty: 1,
             image: product.image,
+            prescriptionRequired: Boolean(product.prescriptionRequired),
+            approvedPrescriptionQuantity: 0,
+            prescriptionReady: !product.prescriptionRequired,
           },
         ];
       });
@@ -316,6 +338,7 @@ function AppLayout() {
           {/* Protected Routes */}
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+          <Route path="/prescriptions" element={<ProtectedRoute><Prescriptions /></ProtectedRoute>} />
           <Route
             path="/checkout"
             element={

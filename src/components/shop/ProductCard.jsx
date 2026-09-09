@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faCartPlus, faPills } from "@fortawesome/free-solid-svg-icons";
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
+import { Link } from "react-router-dom";
 
 function formatPrice(n) {
   return "₦" + Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -14,6 +15,14 @@ export function ProductCard({ product, addToCart, addToWishlist, isWishlisted })
           <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
         ) : (
           <FontAwesomeIcon icon={faPills} size="2x" className="text-slate-300" />
+        )}
+        {product.prescriptionRequired && (
+          <Link
+            to={`/prescriptions?productId=${product.id}`}
+            className="mt-5 inline-flex w-full items-center justify-center rounded-full border-2 border-[#23195f] px-5 py-3 text-sm font-semibold text-[#23195f]"
+          >
+            Upload prescription
+          </Link>
         )}
         <button
           type="button"
@@ -38,7 +47,7 @@ export function ProductCard({ product, addToCart, addToWishlist, isWishlisted })
           type="button"
           disabled={!product.inStock}
           onClick={() => addToCart && addToCart(product)}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#23195f] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className={`${product.prescriptionRequired ? "mt-3" : "mt-5"} inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#23195f] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <FontAwesomeIcon icon={faCartPlus} size="sm" />
           Add to cart
