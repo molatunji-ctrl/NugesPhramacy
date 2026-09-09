@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { api, PROMO_CODES } from "../service/api";
+import { Link, useNavigate } from "react-router-dom";
+import { api } from "../service/api";
 
 import verveLogo from "../assets/Icons/verve.png";
 import mastercardLogo from "../assets/Icons/mastercard.jpg";
@@ -45,15 +45,17 @@ function SkeletonSummary() {
 
 function Cart({
   cart,
-  setCart,
   deliveryFee = 0,
   vatRate = 0.075,
   currencySymbol = "₦",
-  onCheckout,
   promoDiscount,
   onApplyPromo,
   onRemovePromo,
+  onUpdateQuantity,
+  onRemoveItem,
+  onClearCart,
 }) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ visible: false, message: "" });
 
@@ -72,18 +74,11 @@ function Cart({
     n.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // ── cart actions ──────────────────────────────
-  const updateQty = (id, delta) => {
-    setCart((prev) =>
-      prev
-        .map((item) =>
-          item.id === id ? { ...item, qty: Math.max(0, item.qty + delta) } : item
-        )
-        .filter((item) => item.qty > 0)
-    );
-  };
+  const updateQty = (item, delta) =>
+    onUpdateQuantity?.(item, Math.max(0, Number(item.qty || 0) + delta));
 
-  const removeItem = (id) => setCart((prev) => prev.filter((item) => item.id !== id));
-  const clearCart = () => setCart([]);
+  const removeItem = (item) => onRemoveItem?.(item);
+  const clearCart = () => onClearCart?.();
 
   // ── toast helper ──────────────────────────────
   const showToast = (msg) => {
@@ -97,7 +92,7 @@ function Cart({
       showToast("Your cart is empty. Please add items before checking out.");
       return;
     }
-    onCheckout?.();
+    navigate("/checkout");
   };
 
   // ── promo code handlers ───────────────────────
@@ -109,17 +104,21 @@ function Cart({
     setPromoError("");
 
     try {
-      const result = await api.applyPromoCode(code);
-      onApplyPromo?.({ code, ...result });
-      setPromoInput("");
-    } catch {
-      const local = PROMO_CODES[code];
-      if (local) {
-        onApplyPromo?.({ code, ...local });
-        setPromoInput("");
-      } else {
-        setPromoError("That promo code isn't valid or has expired.");
+      const result = await api.applyPromoCode(code, subtotal);
+      if (!result?.valid) {
+        throw new Error(result?.message || "That promo code is not valid.");
       }
+      const type = String(result.type || "").toLowerCase();
+      onApplyPromo?.({
+        code,
+        type,
+        value: Number(result.value || 0),
+        discountAmount: Number(result.discountAmount || 0),
+        label: result.message || "Promo code applied",
+      });
+      setPromoInput("");
+    } catch (error) {
+      setPromoError(error.message || "That promo code isn't valid or has expired.");
     } finally {
       setApplyingPromo(false);
     }
@@ -268,7 +267,7 @@ function Cart({
                         {/* qty stepper */}
                         <div className="inline-flex items-center rounded-full border border-gray-200 bg-white">
                           <button
-                            onClick={() => updateQty(item.id, -1)}
+                            onClick={() => updateQty(item, -1)}
                             className="h-11 w-11 text-slate-500 hover:text-[#23195f] transition"
                             aria-label="Decrease quantity"
                           >
@@ -278,7 +277,7 @@ function Cart({
                             {item.qty}
                           </span>
                           <button
-                            onClick={() => updateQty(item.id, 1)}
+                            onClick={() => updateQty(item, 1)}
                             className="h-11 w-11 text-slate-500 hover:text-[#23195f] transition"
                             aria-label="Increase quantity"
                           >
@@ -295,7 +294,7 @@ function Cart({
 
                     {/* remove */}
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item)}
                       className="self-start text-slate-400 transition hover:text-rose-500 sm:self-center"
                       aria-label="Remove item"
                     >

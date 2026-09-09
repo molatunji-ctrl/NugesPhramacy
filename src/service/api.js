@@ -131,13 +131,6 @@ export async function tryApi(paths, options = {}) {
   throw lastError;
 }
 
-// Client-side fallback while the matching backend promotion route is being added.
-export const PROMO_CODES = {
-  SAVE10: { type: "percent", value: 10, label: "10% off your order" },
-  SAVE20: { type: "percent", value: 20, label: "20% off your order" },
-  WELCOME5000: { type: "flat", value: 5000, label: "₦5,000 off your order" },
-};
-
 export const api = {
   login: async (payload) => {
     try {
@@ -174,30 +167,39 @@ export const api = {
     }
   },
 
-  getProducts: () => tryApi(["/products", "/product", "/medicines", "/items"]),
+  getProducts: (params = {}) => apiRequest("/products", {
+    params: { size: 50, ...params },
+  }),
 
-  getCart: () => tryApi(["/cart", "/carts/me", "/user/cart"]),
+  getCart: () => apiRequest("/cart"),
 
-  saveCart: (cart) =>
-    tryApi(["/cart", "/carts/me", "/user/cart"], {
-      method: "PUT",
-      data: {
-        items: cart,
-        cart,
-      },
+  addCartItem: (productId, quantity = 1) =>
+    apiRequest("/cart/items", {
+      method: "POST",
+      data: { productId, quantity },
     }),
 
-  getWishlist: () =>
-    tryApi(["/wishlist", "/wishlists/me", "/user/wishlist"]),
-
-  saveWishlist: (wishlist) =>
-    tryApi(["/wishlist", "/wishlists/me", "/user/wishlist"], {
+  updateCartItem: (itemId, quantity) =>
+    apiRequest(`/cart/items/${itemId}`, {
       method: "PUT",
-      data: {
-        items: wishlist,
-        wishlist,
-      },
+      data: { quantity },
     }),
+
+  removeCartItem: (itemId) =>
+    apiRequest(`/cart/items/${itemId}`, { method: "DELETE" }),
+
+  clearCart: () => apiRequest("/cart", { method: "DELETE" }),
+
+  getWishlist: () => apiRequest("/wishlist"),
+
+  addWishlistItem: (productId) =>
+    apiRequest("/wishlist/items", {
+      method: "POST",
+      data: { productId },
+    }),
+
+  removeWishlistItem: (itemId) =>
+    apiRequest(`/wishlist/items/${itemId}`, { method: "DELETE" }),
 
   getProfile: () =>
     tryApi(["/profile", "/user/profile", "/users/me", "/auth/me"]),
@@ -212,9 +214,26 @@ export const api = {
     tryApi(["/orders", "/order", "/user/orders", "/orders/me"]),
 
   createOrder: (order) =>
-    tryApi(["/orders", "/order", "/checkout"], {
+    apiRequest("/orders", {
       method: "POST",
       data: order,
+    }),
+
+  getCheckoutQuote: (promoCode) =>
+    apiRequest("/orders/quote", {
+      method: "POST",
+      data: { promoCode: promoCode || null },
+    }),
+
+  initializeFlutterwavePayment: (orderId) =>
+    apiRequest(`/payments/flutterwave/initialize/${orderId}`, {
+      method: "POST",
+    }),
+
+  verifyFlutterwavePayment: (transactionId, txRef) =>
+    apiRequest("/payments/flutterwave/verify", {
+      method: "POST",
+      data: { transactionId: String(transactionId), txRef },
     }),
 
   applyPromoCode: (code, orderAmount) =>
@@ -271,11 +290,40 @@ export function normalizeProduct(product) {
 
     description: product.description || product.details || "",
 
+    prescriptionRequired: Boolean(product.prescriptionRequired),
+
     inStock:
       product.inStock ??
       product.available ??
       (typeof product.stock === "number" ? product.stock > 0 : true),
   };
+}
+
+export function normalizeCart(data) {
+  return normalizeList(data).map((item) => ({
+    id: item.productId ?? item.product?.id ?? item.id,
+    cartItemId: item.id,
+    name: item.productName ?? item.name ?? item.product?.name ?? "Medication",
+    image: item.productImage ?? item.image ?? item.product?.image ?? "",
+    price: Number(item.productPrice ?? item.price ?? item.product?.price ?? 0),
+    qty: Number(item.quantity ?? item.qty ?? 1),
+    inStock: item.inStock ?? true,
+    brand: item.brand ?? item.product?.brand ?? "NUGES",
+    type: item.type ?? item.product?.category ?? "PHARMACY",
+  }));
+}
+
+export function normalizeWishlist(data) {
+  return normalizeList(data).map((item) => ({
+    id: item.productId ?? item.product?.id ?? item.id,
+    wishlistItemId: item.id,
+    name: item.productName ?? item.name ?? item.product?.name ?? "Medication",
+    image: item.productImage ?? item.image ?? item.product?.image ?? "",
+    price: Number(item.productPrice ?? item.price ?? item.product?.price ?? 0),
+    inStock: item.inStock ?? true,
+    brand: item.brand ?? item.product?.brand ?? "NUGES",
+    type: item.type ?? item.product?.category ?? "PHARMACY",
+  }));
 }
 
 export default axiosClient;

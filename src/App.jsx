@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import SignIn from "./pages/SignIn";
 import LogIn from "./pages/LogIn";
 import Home from "./pages/Home";
@@ -11,7 +11,8 @@ import Footer from "./components/layout/footer";
 import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
-import { api, normalizeList } from "./service/api";
+import PaymentCallback from "./pages/PaymentCallback";
+import { api, normalizeCart, normalizeWishlist } from "./service/api";
 import { SearchProvider } from "./context/SearchProvider";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
@@ -55,103 +56,212 @@ const ProtectedRoute = ({ children }) => {
 // ── Main Layout ────────────────────────────────────
 function AppLayout() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
-  const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders", "/checkout"];
+  const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders", "/checkout", "/payment/callback"];
   const hideNavbar = ACCOUNT_PAGE_PATHS.includes(location.pathname.toLowerCase());
   const hideFooter = hideNavbar;
 
-  const [cart, setCart] = useState(() => loadLocalArray("cart"));
-  const [wishlist, setWishlist] = useState(() => loadLocalArray("wishlist"));
+  const [cart, setCart] = useState(() => loadLocalArray("guestCart"));
+  const [wishlist, setWishlist] = useState(() => loadLocalArray("guestWishlist"));
   const [promoDiscount, setPromoDiscount] = useState(() => loadLocalObject("promoDiscount"));
-  const hydrated = useRef(false);
+  const [shoppingError, setShoppingError] = useState("");
+  const [shoppingLoading, setShoppingLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    if (!user) {
-      hydrated.current = true;
+    if (authLoading) {
       return undefined;
     }
 
-    hydrated.current = false;
-
-    Promise.allSettled([api.getCart(), api.getWishlist()]).then(
-      ([cartResult, wishlistResult]) => {
+    if (!user) {
+      queueMicrotask(() => {
         if (!mounted) return;
-        if (cartResult.status === "fulfilled") {
-          setCart(normalizeList(cartResult.value));
+        setCart(loadLocalArray("guestCart"));
+        setWishlist(loadLocalArray("guestWishlist"));
+        setShoppingLoading(false);
+      });
+      return () => { mounted = false; };
+    }
+
+    queueMicrotask(() => mounted && setShoppingLoading(true));
+    const hydrateShopping = async () => {
+      try {
+        let [cartResponse, wishlistResponse] = await Promise.all([
+          api.getCart(),
+          api.getWishlist(),
+        ]);
+
+        const guestCart = loadLocalArray("guestCart");
+        for (const item of guestCart) {
+          cartResponse = await api.addCartItem(item.id, Number(item.qty || 1));
         }
-        if (wishlistResult.status === "fulfilled") {
-          setWishlist(normalizeList(wishlistResult.value));
+
+        const guestWishlist = loadLocalArray("guestWishlist");
+        for (const item of guestWishlist) {
+          wishlistResponse = await api.addWishlistItem(item.id);
         }
-        hydrated.current = true;
+
+        if (!mounted) return;
+        setCart(normalizeCart(cartResponse));
+        setWishlist(normalizeWishlist(wishlistResponse));
+        localStorage.removeItem("guestCart");
+        localStorage.removeItem("guestWishlist");
+        setShoppingError("");
+      } catch (error) {
+        if (mounted) {
+          setShoppingError(error.message || "Unable to load your saved shopping items.");
+        }
+      } finally {
+        if (mounted) setShoppingLoading(false);
       }
-    );
+    };
+
+    hydrateShopping();
 
     return () => {
       mounted = false;
     };
-  }, [user]);
+  }, [user, authLoading]);
 
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-    if (hydrated.current && user) {
-      api.saveCart(cart).catch(() => {});
+    if (!authLoading && !user) {
+      localStorage.setItem("guestCart", JSON.stringify(cart));
     }
-  }, [cart, user]);
+  }, [cart, user, authLoading]);
 
   useEffect(() => {
-    localStorage.setItem("wishlist", JSON.stringify(wishlist));
-    if (hydrated.current && user) {
-      api.saveWishlist(wishlist).catch(() => {});
+    if (!authLoading && !user) {
+      localStorage.setItem("guestWishlist", JSON.stringify(wishlist));
     }
-  }, [wishlist, user]);
+  }, [wishlist, user, authLoading]);
 
-  const addToCart = (product) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) => item.id === product.id ? { ...item, qty: Number(item.qty || 0) + 1 } : item);
+  const addToCart = async (product) => {
+    try {
+      if (user) {
+        const response = await api.addCartItem(product.id, 1);
+        setCart(normalizeCart(response));
+        setShoppingError("");
+        return true;
       }
-      return [
-        ...prev,
-        {
-          id: product.id,
-          name: product.name,
-          brand: product.brand || product.category?.toUpperCase() || "NUGES",
-          type: product.type || product.category || "PHARMACY",
-          price: Number(product.price || 0),
-          qty: 1,
-          image: product.image,
-        },
-      ];
-    });
+
+      setCart((prev) => {
+        const existing = prev.find((item) => item.id === product.id);
+        if (existing) {
+          return prev.map((item) => item.id === product.id ? { ...item, qty: Number(item.qty || 0) + 1 } : item);
+        }
+        return [
+          ...prev,
+          {
+            id: product.id,
+            name: product.name,
+            brand: product.brand || product.category?.toUpperCase() || "NUGES",
+            type: product.type || product.category || "PHARMACY",
+            price: Number(product.price || 0),
+            qty: 1,
+            image: product.image,
+          },
+        ];
+      });
+      return true;
+    } catch (error) {
+      setShoppingError(error.message || "Unable to update your cart.");
+      return false;
+    }
   };
 
-  const addToWishlist = (product) => {
-    setWishlist((prev) => {
-      if (prev.find((i) => i.id === product.id)) return prev;
-      return [
-        ...prev,
-        {
-          id: product.id,
-          name: product.name,
-          brand: product.brand || product.category?.toUpperCase() || "NUGES",
-          type: product.type || product.category || "PHARMACY",
-          price: Number(product.price || 0),
-          image: product.image,
-          inStock: product.inStock ?? true,
-        },
-      ];
-    });
+  const updateCartQuantity = async (item, quantity) => {
+    try {
+      if (user) {
+        const response = quantity < 1
+          ? await api.removeCartItem(item.cartItemId)
+          : await api.updateCartItem(item.cartItemId, quantity);
+        setCart(normalizeCart(response));
+      } else {
+        setCart((prev) => prev
+          .map((entry) => entry.id === item.id ? { ...entry, qty: quantity } : entry)
+          .filter((entry) => entry.qty > 0));
+      }
+      setShoppingError("");
+    } catch (error) {
+      setShoppingError(error.message || "Unable to update your cart.");
+    }
   };
 
-  const removeFromWishlist = (id) => setWishlist((prev) => prev.filter((i) => i.id !== id));
+  const removeFromCart = async (item) => {
+    try {
+      if (user) {
+        const response = await api.removeCartItem(item.cartItemId);
+        setCart(normalizeCart(response));
+      } else {
+        setCart((prev) => prev.filter((entry) => entry.id !== item.id));
+      }
+      setShoppingError("");
+    } catch (error) {
+      setShoppingError(error.message || "Unable to remove this item.");
+    }
+  };
 
-  const moveToCart = (item) => {
-    addToCart(item);
-    removeFromWishlist(item.id);
+  const clearCart = async () => {
+    try {
+      if (user) {
+        await api.clearCart();
+      }
+      setCart([]);
+      setShoppingError("");
+    } catch (error) {
+      setShoppingError(error.message || "Unable to clear your cart.");
+    }
+  };
+
+  const addToWishlist = async (product) => {
+    try {
+      if (user) {
+        const response = await api.addWishlistItem(product.id);
+        setWishlist(normalizeWishlist(response));
+        setShoppingError("");
+        return;
+      }
+
+      setWishlist((prev) => {
+        if (prev.find((i) => i.id === product.id)) return prev;
+        return [
+          ...prev,
+          {
+            id: product.id,
+            name: product.name,
+            brand: product.brand || product.category?.toUpperCase() || "NUGES",
+            type: product.type || product.category || "PHARMACY",
+            price: Number(product.price || 0),
+            image: product.image,
+            inStock: product.inStock ?? true,
+          },
+        ];
+      });
+    } catch (error) {
+      setShoppingError(error.message || "Unable to update your wishlist.");
+    }
+  };
+
+  const removeFromWishlist = async (id) => {
+    const item = wishlist.find((entry) => entry.id === id);
+    try {
+      if (user && item?.wishlistItemId) {
+        const response = await api.removeWishlistItem(item.wishlistItemId);
+        setWishlist(normalizeWishlist(response));
+      } else {
+        setWishlist((prev) => prev.filter((entry) => entry.id !== id));
+      }
+      setShoppingError("");
+    } catch (error) {
+      setShoppingError(error.message || "Unable to remove this item.");
+    }
+  };
+
+  const moveToCart = async (item) => {
+    const added = await addToCart(item);
+    if (added) await removeFromWishlist(item.id);
   };
 
   const applyPromo = (discount) => {
@@ -159,10 +269,10 @@ function AppLayout() {
     localStorage.setItem("promoDiscount", JSON.stringify(discount));
   };
 
-  const removePromo = () => {
+  const removePromo = useCallback(() => {
     setPromoDiscount(null);
     localStorage.removeItem("promoDiscount");
-  };
+  }, []);
 
   const cartCount = cart.reduce((s, i) => s + Number(i.qty || 0), 0);
 
@@ -170,6 +280,11 @@ function AppLayout() {
     <>
       {!hideNavbar && <Navbar cartCount={cartCount} wishlistCount={wishlist.length} />}
       <div className={hideNavbar ? "" : "pt-24"}>
+        {shoppingError && (
+          <div role="alert" className="fixed right-4 top-4 z-[70] max-w-sm rounded-2xl bg-rose-600 px-5 py-4 text-sm font-semibold text-white shadow-xl">
+            {shoppingError}
+          </div>
+        )}
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/home" replace />} />
@@ -189,6 +304,10 @@ function AppLayout() {
                 promoDiscount={promoDiscount}
                 onApplyPromo={applyPromo}
                 onRemovePromo={removePromo}
+                onUpdateQuantity={updateCartQuantity}
+                onRemoveItem={removeFromCart}
+                onClearCart={clearCart}
+                deliveryFee={1500}
               />
             }
           />
@@ -209,7 +328,16 @@ function AppLayout() {
                   currencySymbol="₦"
                   promoDiscount={promoDiscount}
                   onRemovePromo={removePromo}
+                  loading={shoppingLoading}
                 />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment/callback"
+            element={
+              <ProtectedRoute>
+                <PaymentCallback setCart={setCart} onRemovePromo={removePromo} />
               </ProtectedRoute>
             }
           />
