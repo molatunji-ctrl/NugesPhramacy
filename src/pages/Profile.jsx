@@ -40,6 +40,7 @@ function AccountShell({ children }) {
           <aside className="space-y-2 lg:sticky lg:top-10 lg:self-start">
             <NavLink to="/profile" className={navLinkClass} end><i className="fa-regular fa-user"></i>My profile</NavLink>
             <NavLink to="/orders" className={navLinkClass}><i className="fa-solid fa-box"></i>My orders</NavLink>
+            <NavLink to="/prescriptions" className={navLinkClass}><i className="fa-regular fa-file-lines"></i>My prescriptions</NavLink>
           </aside>
           <main>{children}</main>
         </div>

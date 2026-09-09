@@ -62,6 +62,9 @@ function Cart({
   const [promoInput, setPromoInput] = useState("");
   const [promoError, setPromoError] = useState("");
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const prescriptionBlockers = cart.filter(
+    (item) => item.prescriptionRequired && !item.prescriptionReady
+  );
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 800);
@@ -90,6 +93,10 @@ function Cart({
   const handleCheckout = () => {
     if (cart.length === 0) {
       showToast("Your cart is empty. Please add items before checking out.");
+      return;
+    }
+    if (prescriptionBlockers.length > 0) {
+      showToast("Upload a prescription and wait for approval before checking out.");
       return;
     }
     navigate("/checkout");
@@ -263,6 +270,25 @@ function Cart({
                         {item.name}
                       </h3>
 
+                      {item.prescriptionRequired && (
+                        <div className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${
+                          item.prescriptionReady
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}>
+                          {item.prescriptionReady
+                            ? `Prescription approved for ${item.approvedPrescriptionQuantity} unit(s)`
+                            : (
+                              <>
+                                Prescription approval required.{" "}
+                                <Link to={`/prescriptions?productId=${item.id}`} className="underline">
+                                  Upload now
+                                </Link>
+                              </>
+                            )}
+                        </div>
+                      )}
+
                       <div className="mt-4 flex items-center justify-between">
                         {/* qty stepper */}
                         <div className="inline-flex items-center rounded-full border border-gray-200 bg-white">
@@ -423,9 +449,12 @@ function Cart({
                     {/* checkout button */}
                     <button
                       onClick={handleCheckout}
-                      className="mt-6 w-full rounded-full bg-[#23195f] py-4 text-base font-semibold text-white transition hover:opacity-90"
+                      disabled={prescriptionBlockers.length > 0}
+                      className="mt-6 w-full rounded-full bg-[#23195f] py-4 text-base font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Proceed to Checkout →
+                      {prescriptionBlockers.length > 0
+                        ? "Prescription approval required"
+                        : "Proceed to Checkout →"}
                     </button>
 
                     <p className="mt-4 text-center text-sm text-slate-500">

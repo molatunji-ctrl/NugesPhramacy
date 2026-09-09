@@ -158,22 +158,21 @@ function ProductCard({ product, addToCart, addToWishlist, isWishlisted }) {
             {product.inStock ? "In stock" : "Out of stock"}
           </span>
         </div>
-        {product.prescriptionRequired ? (
-          <Link to="/contact" className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[#23195f] px-5 py-3 text-sm font-semibold text-[#23195f]">
+        {product.prescriptionRequired && (
+          <Link to={`/prescriptions?productId=${product.id}`} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[#23195f] px-5 py-3 text-sm font-semibold text-[#23195f]">
             <FontAwesomeIcon icon={faEnvelope} size="sm" />
-            Prescription approval required
+            Upload prescription
           </Link>
-        ) : (
-          <button
-            type="button"
-            disabled={!product.inStock}
-            onClick={() => addToCart && addToCart(product)}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#23195f] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <FontAwesomeIcon icon={faCartPlus} size="sm" />
-            Add to cart
-          </button>
         )}
+        <button
+          type="button"
+          disabled={!product.inStock}
+          onClick={() => addToCart && addToCart(product)}
+          className={`${product.prescriptionRequired ? "mt-3" : "mt-5"} inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#23195f] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
+        >
+          <FontAwesomeIcon icon={faCartPlus} size="sm" />
+          Add to cart
+        </button>
       </div>
     </article>
   );

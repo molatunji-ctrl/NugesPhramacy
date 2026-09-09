@@ -64,6 +64,12 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
               Shop
             </NavLink>
 
+            {isLoggedIn && (
+              <NavLink to="/prescriptions" className={linkClass}>
+                Prescriptions
+              </NavLink>
+            )}
+
             <Link to="/service" className={anchorClass}>
               Services
             </Link>
@@ -216,6 +222,16 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
             >
               Shop
             </NavLink>
+
+            {isLoggedIn && (
+              <NavLink
+                to="/prescriptions"
+                className={linkClass}
+                onClick={() => setOpen(false)}
+              >
+                Prescriptions
+              </NavLink>
+            )}
 
             <Link
               to="/service"
