@@ -23,6 +23,22 @@ function SignIn() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const handleGoogle = async () => {
+    setLoading(true);
+    setMessage("");
+    setMessageType("");
+
+    try {
+      await loginWithGoogle();
+      navigate("/home", { replace: true });
+    } catch (error) {
+      setMessageType("error");
+      setMessage(error.message || "Google sign-in failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -51,7 +67,14 @@ function SignIn() {
 
       setMessageType("success");
       setMessage(response?.message || "Account created. You can now sign in.");
-      setTimeout(() => navigate("/login", { replace: true }), 800);
+      if (response?.emailVerificationRequired) {
+        navigate("/check-email", {
+          replace: true,
+          state: { email: form.email.toLowerCase().trim() },
+        });
+      } else {
+        setTimeout(() => navigate("/login", { replace: true }), 800);
+      }
     } catch (error) {
       setMessageType("error");
       setMessage(error.message || "Account creation failed.");
@@ -84,7 +107,8 @@ function SignIn() {
 
           <button
             type="button"
-            onClick={loginWithGoogle}
+            onClick={handleGoogle}
+            disabled={loading}
             className="flex items-center justify-center rounded-xl border border-gray-300 py-2.5 font-semibold text-[#100F27] transition-all duration-200 hover:border-[#1B1967] hover:bg-[#F4F5FA] active:scale-[0.98]"
           >
             <img src={googleIcon} alt="" className="mr-2 h-5 w-5" />
@@ -122,6 +146,7 @@ function SignIn() {
               onChange={updateField}
               autoComplete="new-password"
               minLength={8}
+              maxLength={72}
               className="rounded-xl border border-gray-300 px-3 py-2.5 outline-none transition-all duration-200 focus:border-[#1B1967] focus:ring-2 focus:ring-[#1B1967]/15"
               required
             />
@@ -133,6 +158,7 @@ function SignIn() {
               onChange={updateField}
               autoComplete="new-password"
               minLength={8}
+              maxLength={72}
               className="rounded-xl border border-gray-300 px-3 py-2.5 outline-none transition-all duration-200 focus:border-[#1B1967] focus:ring-2 focus:ring-[#1B1967]/15"
               required
             />

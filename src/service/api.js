@@ -1,4 +1,5 @@
 import axios from "axios";
+import { auth } from "../lib/firebase";
 
 export const API_BASE = (
   import.meta.env.VITE_API_URL || "https://np-backend-qnrv.onrender.com"
@@ -58,9 +59,17 @@ async function getCsrfToken() {
 
 axiosClient.interceptors.request.use(async (config) => {
   const method = (config.method || "get").toLowerCase();
+  const firebaseToken = auth.currentUser?.emailVerified
+    ? await auth.currentUser.getIdToken()
+    : null;
 
-  if (UNSAFE_METHODS.has(method)) {
-    config.headers = config.headers || {};
+  config.headers = config.headers || {};
+
+  if (firebaseToken) {
+    config.headers.Authorization = `Bearer ${firebaseToken}`;
+  }
+
+  if (UNSAFE_METHODS.has(method) && !firebaseToken) {
     config.headers["X-XSRF-TOKEN"] = await getCsrfToken();
   }
 
@@ -155,6 +164,30 @@ export const api = {
     }
   },
 
+  requestPasswordReset: (email) =>
+    apiRequest("/auth/forgot-password", {
+      method: "POST",
+      data: { email },
+    }),
+
+  resetPassword: (token, password) =>
+    apiRequest("/auth/reset-password", {
+      method: "POST",
+      data: { token, password },
+    }),
+
+  verifyEmail: (token) =>
+    apiRequest("/auth/verify-email", {
+      method: "POST",
+      data: { token },
+    }),
+
+  resendEmailVerification: (email) =>
+    apiRequest("/auth/resend-verification", {
+      method: "POST",
+      data: { email },
+    }),
+
   getCurrentUser: () => apiRequest("/auth/me"),
 
   logout: async () => {
@@ -216,6 +249,18 @@ export const api = {
   getPrescriptions: () =>
     apiRequest("/prescriptions", { params: { size: 50 } }),
 
+  getPrescriptionFile: async (prescriptionId) => {
+    try {
+      const response = await axiosClient.get(
+        `/prescriptions/${prescriptionId}/file`,
+        { responseType: "blob" }
+      );
+      return response.data;
+    } catch (error) {
+      return getApiError(error);
+    }
+  },
+
   uploadPrescription: async (productId, quantity, file) => {
     const formData = new FormData();
     formData.append("productId", String(productId));
@@ -231,9 +276,6 @@ export const api = {
       return getApiError(error);
     }
   },
-
-  prescriptionFileUrl: (prescriptionId) =>
-    `${API_BASE}/api/prescriptions/${prescriptionId}/file`,
 
   createOrder: (order) =>
     apiRequest("/orders", {
