@@ -53,8 +53,20 @@ function LogIn() {
     }
   };
 
-  const handleGoogle = () => {
-    loginWithGoogle();
+  const handleGoogle = async () => {
+    setLoading(true);
+    setMessage("");
+    setMessageType("");
+
+    try {
+      await loginWithGoogle();
+      navigate("/home", { replace: true });
+    } catch (error) {
+      setMessageType("error");
+      setMessage(error.message || "Google sign-in failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,6 +96,7 @@ function LogIn() {
           <button
             type="button"
             onClick={handleGoogle}
+            disabled={loading}
             className="flex items-center justify-center rounded-xl border border-gray-300 py-2.5 font-semibold text-[#100F27] transition-all duration-200 hover:border-[#1B1967] hover:bg-[#F4F5FA] active:scale-[0.98]"
           >
             <img src={googleIcon} alt="Google" className="mr-2 h-5 w-5" />
@@ -110,15 +123,16 @@ function LogIn() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              maxLength={72}
               required
             />
 
-            <a
-              href="#"
+            <Link
+              to="/forgot-password"
               className="text-[13px] font-semibold text-[#1B1967] transition-opacity duration-200 hover:opacity-70"
             >
               Forgot password?
-            </a>
+            </Link>
 
             <button
               type="submit"
@@ -137,16 +151,27 @@ function LogIn() {
           </form>
 
           {message && (
-            <p
-              role="alert"
-              className={`text-center rounded-lg px-3 py-2 text-sm ${
-                messageType === "success"
-                  ? "border border-green-100 bg-green-50 text-green-700"
-                  : "border border-red-100 bg-red-50 text-red-700"
-              }`}
-            >
-              {message}
-            </p>
+            <div className="space-y-2 text-center">
+              <p
+                role="alert"
+                className={`rounded-lg px-3 py-2 text-sm ${
+                  messageType === "success"
+                    ? "border border-green-100 bg-green-50 text-green-700"
+                    : "border border-red-100 bg-red-50 text-red-700"
+                }`}
+              >
+                {message}
+              </p>
+              {messageType === "error" && message.toLowerCase().includes("verify") && (
+                <Link
+                  to="/check-email"
+                  state={{ email: email.toLowerCase().trim() }}
+                  className="text-sm font-semibold text-[#1B1967] hover:underline"
+                >
+                  Resend verification email
+                </Link>
+              )}
+            </div>
           )}
 
           <div className="flex items-center justify-center gap-1">
