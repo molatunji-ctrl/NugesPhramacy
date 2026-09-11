@@ -92,6 +92,23 @@ function Prescriptions() {
     }
   };
 
+  const viewPrescriptionFile = async (prescriptionId) => {
+    setError("");
+
+    try {
+      const file = await api.getPrescriptionFile(prescriptionId);
+      const fileUrl = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(fileUrl), 60_000);
+    } catch (fileError) {
+      setError(fileError.message || "Unable to open this prescription file.");
+    }
+  };
+
   return (
     <AccountShell>
       <div>
@@ -204,7 +221,7 @@ function Prescriptions() {
 
                 <button
                   type="button"
-                  onClick={() => window.open(api.prescriptionFileUrl(prescription.id), "_blank", "noopener,noreferrer")}
+                  onClick={() => viewPrescriptionFile(prescription.id)}
                   className="mt-4 text-sm font-semibold text-[#23195f] hover:underline"
                 >
                   View uploaded file

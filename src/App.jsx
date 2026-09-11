@@ -13,6 +13,10 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import PaymentCallback from "./pages/PaymentCallback";
 import Prescriptions from "./pages/Prescriptions";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
+import CheckEmail from "./pages/CheckEmail";
 import { api, normalizeCart, normalizeWishlist } from "./service/api";
 import { SearchProvider } from "./context/SearchProvider";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -59,7 +63,19 @@ function AppLayout() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   
-  const ACCOUNT_PAGE_PATHS = ["/signin", "/login", "/profile", "/orders", "/prescriptions", "/checkout", "/payment/callback"];
+  const ACCOUNT_PAGE_PATHS = [
+    "/signin",
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+    "/check-email",
+    "/profile",
+    "/orders",
+    "/prescriptions",
+    "/checkout",
+    "/payment/callback",
+  ];
   const hideNavbar = ACCOUNT_PAGE_PATHS.includes(location.pathname.toLowerCase());
   const hideFooter = hideNavbar;
 
@@ -313,6 +329,10 @@ function AppLayout() {
           <Route path="/home" element={<Home addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/login" element={<LogIn />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/check-email" element={<CheckEmail />} />
           <Route path="/shop" element={<Shop addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} cartCount={cartCount} />} />
           <Route path="/about" element={<Home addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} />} />
           <Route path="/service" element={<Home addToCart={addToCart} addToWishlist={addToWishlist} wishlist={wishlist} />} />
